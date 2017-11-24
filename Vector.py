@@ -19,12 +19,14 @@ class Vector(object):
 		return Vector(abs(self.x), abs(self.y))
 
 	def __mul__(self, other):
-		return Vector(self.x * other.x, self.y * other.y)
+		return  Vector(self.x * other, self.y * other) if type(other) == float or type(other) == int else Vector(self.x * other.x, self.y * other.y)
 
 	def __div__(self, other):
-		if other.x == 0 or other.y == 0:
-			raise NameError('Division by zero')	
-		return Vector(self.x / other.x, self.y / other.y)
+		if (type(other) == int or type(other) == float) and other == 0:
+			raise NameError('Division by zero')
+		if type(other) == Vector and (other.x == 0 or other.y == 0):
+			raise NameError('Division by zero')
+		return  Vector(self.x / other, self.y / other) if type(other) == float or type(other) == int else Vector(self.x / other.x, self.y / other.y)
 
 	def dot(self, other):
 		return self.x * other.x + self.y * other.y
@@ -42,7 +44,7 @@ class Vector(object):
 		n = max(abs(self.x), abs(self.y))
 		if n == 0:
 			raise NameError('Division by zero')
-		return Vector(self.x / n, self.y /n)
+		return self / n
 
 	def __str__(self):
 		return '(' + str(self.x) + ', ' + str(self.y) + ')'
@@ -79,3 +81,7 @@ if __name__ == '__main__':
 	print 'd: (1, 2) (2, 1) ' + str(d)
 	
 	print 'p1: norm ' + str(p1) + '-> ' + str(p1.normalized())	
+
+	p2 = Vector(1, 2)
+	print 'p2: scalar mul: (1, 2) * 2.0 -> ' + str(p2 * 2.0)
+	print 'p2: scalar mul: (1, 2) / 2.0 -> ' + str(p2 / 2.0)
