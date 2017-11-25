@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Vector import Vector
 
-class Tranform:
+class Transform:
     '''
     Class Summary
     
@@ -57,7 +57,7 @@ class Tranform:
         return string
 
 if __name__ == '__main__':
-    t = Tranform(Vector(10,5),0.0,Vector(5,3))
+    t = Transform(Vector(10,5),0.0,Vector(5,3))
     print(t)
     t.move(Vector(3,4))
     t.rotate(-10.0)
