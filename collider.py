@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta , abstractmethod
 from transform import Transform
-from Vector import Vector
+from vector import Vector
 
 class Collider:
     __metaclass__ = ABCMeta
