@@ -48,6 +48,10 @@ class Transform:
     def get_euler_angle(self):
         self.update_global_state()
         return self.euler_angle
+        
+    def get_scale(self):
+        self.update_global_state()
+        return self.scale
     
     def __str__(self):
         self.update_global_state()
