@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Vector import Vector
+from vector import Vector
 
 class Transform:
     '''
