@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from vector import Vector
+from loging import debug
 
 class Transform:
     '''
@@ -19,8 +20,8 @@ class Transform:
         self.parent = parent
         self.got_updated = False
         self.update_global_state()
-        print('WARNING : TRANSFORM GLOBAL STATE HAVEN\'T BEEN DEVELOP YET #NOFEATURE !!!')
-        print('PARENT SHOULD ALWAYS BE NONE')
+        debug('WARNING : TRANSFORM GLOBAL STATE HAVEN\'T BEEN DEVELOP YET #NOFEATURE !!!',3)
+        debug('PARENT SHOULD ALWAYS BE NONE',3)
         
     def update_global_state(self):
         if self.got_updated:
