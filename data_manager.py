@@ -7,6 +7,7 @@ from pygame import image, Surface, Rect
 class DataManager(object):
 	def __init__(self):
 		self.sprite_sheets = {}
+		self.tiles = {}
 
 	def load_sprite_sheet(self, id, sprite_sheet_path, infos):
 		if id in self.sprite_sheets:
@@ -14,14 +15,27 @@ class DataManager(object):
 		img = image.load(sprite_sheet_path)
 		self.sprite_sheets[id] = SpriteSheet(img, infos)
 
+	def load_tile(self, id, tile_path, infos):
+		if id in self.tiles:
+			return
+		img = image.load(tile_path)
+		self.tiles[id] = Tile(img, infos)
+
 	def get_sprite_sheet(self, id):
 		if id in self.sprite_sheets:
 			return self.sprite_sheets[id]
 		raise NameError('Sprtie sheet ' + str(id) + ' does not exist')
 
+	def get_tile(self, id):
+		if id in self.tiles:
+			return self.tiles[id]
+		raise NameError('Tile ' + str(id) + ' does not exist')
+
 	def __str__(self):
 		msg = 'Data Manager:\n  Sprite sheets: '
 		msg += ' '.join(id for id in self.sprite_sheets)
+		msg += '\n  Tiles: '
+		msg += ' '.join(id for id in self.tiles)
 		return msg
 
 # ===================================================
@@ -50,6 +64,25 @@ class SpriteSheet(object):
 		return sprite
 
 # ===================================================
+# TILE
+
+class TileInfos(object):
+	def __init__(self, width, height):
+		self.width = width
+		self.height = height
+
+	def __str__(self):
+		msg = '(width: ' + str(self.width)
+		msg += ' height: ' + str(self.height)
+		msg += ')'
+		return msg
+
+class Tile(object):
+	def __init__(self, tile_image, infos):
+		self.img = tile_image
+		self.infos = infos
+
+# ===================================================
 # EXAMPLE: Data Manager to load sprites
 
 if __name__ == '__main__':
@@ -61,6 +94,11 @@ if __name__ == '__main__':
 	infos = SpriteSheetInfos(6, 4, (600/6, 400/4))
 	data.load_sprite_sheet('TEST1', 'TEST1.png', infos)
 	spriteSheet = data.get_sprite_sheet('TEST1')
+	print str(data)
+
+	infos = TileInfos(100, 100)
+	data.load_tile('CLAY', 'CLAY.jpg', infos)
+	tile = data.get_tile('CLAY')
 	print str(data)
 
 	width = 800
@@ -81,6 +119,8 @@ if __name__ == '__main__':
 		screen.fill(BLACK)
 		dt = clock() - current_time
 		current_time += dt
+
+		screen.blit(tile.img, (0, 0))
 
 		# ====== ANIMATION =============
 		anim_timer += dt
