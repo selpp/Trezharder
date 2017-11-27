@@ -103,6 +103,8 @@ if __name__ == '__main__':
     from collider import BoxCollider
     from vector import Vector
     from input_manager import InputManager
+    from physics_manager import PhysicsManager
+    from rigidbody import Rigidbody
 
     # =====================================================================
 
@@ -122,6 +124,8 @@ if __name__ == '__main__':
 
 			# ================= Collider ==========================
 			self.collider = BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3))
+			self.rb = Rigidbody(self.transform,self.collider)
+
 
 			# ================= Animator ==========================
 			self.animator = Animator()
@@ -197,7 +201,9 @@ if __name__ == '__main__':
 			self.set_animations()
 
         def fixed_update(self, fixed_dt):
-            self.transform.move(self.velocity * self.speed * fixed_dt)
+            self.rb.set_velocity(self.velocity * self.speed)
+            self.rb.update(fixed_dt)
+            #self.transform.move(self.velocity * self.speed * fixed_dt)
 
         def test_collision(self, collider):
             if self.collider.try_collision(collider):
@@ -238,6 +244,9 @@ if __name__ == '__main__':
     current_fixed_time = clock()
     fixed_dt = 0
     fixed_rate = 0.02
+    
+    # ===== GET PhysicsManager ========
+    pm = PhysicsManager.get_instance()
 
     # ===== LOOP ====================
     while True:
@@ -260,7 +269,7 @@ if __name__ == '__main__':
 
             player.fixed_update(fixed_dt)
             fixed_bot.fixed_update(fixed_dt)
-
+            pm.update_collision()
             #player.test_collision(fixed_bot.collider)
 
         # ===== Draw =====
