@@ -3,6 +3,7 @@ from abc import ABCMeta , abstractmethod
 from transform import Transform
 from vector import Vector
 from pygame import draw, Rect
+from physics_manager import PhysicsManager
 
 class Collider:
     __metaclass__ = ABCMeta
@@ -13,6 +14,8 @@ class Collider:
         self.position = position
         self.parent_transform = parent_transform
         self.scale = scale
+        PhysicsManager.get_instance().add_collider(self)
+        
     
     def on_collision(self):
         self.handler()
@@ -24,7 +27,6 @@ class Collider:
     @abstractmethod
     def draw_debug(self):
         pass
-    
     
 class BoxCollider(Collider):
     def __init__(self,collision_handler,parent_transform,position,scale):
