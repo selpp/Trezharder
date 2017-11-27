@@ -46,6 +46,9 @@ class Vector(object):
 			return self
 		return self / n
 
+	def magnitude(self):
+		return sqrt(self.x**2 + self.y**2)
+
 	def __str__(self):
 		return '(' + str(self.x) + ', ' + str(self.y) + ')'
 
@@ -85,3 +88,6 @@ if __name__ == '__main__':
 	p2 = Vector(1, 2)
 	print 'p2: scalar mul: (1, 2) * 2.0 -> ' + str(p2 * 2.0)
 	print 'p2: scalar mul: (1, 2) / 2.0 -> ' + str(p2 / 2.0)
+
+	p3 = Vector(2, 3)
+	print 'p3: (2, 3) magnitude: ' + str(p3.magnitude())
