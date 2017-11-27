@@ -6,10 +6,10 @@ class Transform:
     Class Summary
     
     Attributes :
-        local_position : A numpy.array representing the position
+        local_position : A Vector representing the position
         local_euler_angle : A float representing the angle
-        local_scale : A numpy.array representing the scale
-        parent : A transform representing the parent Transform
+        local_scale : A Vector representing the scale
+        parent : A Transform representing the parent Transform useful to compute the world coord
     '''
     
     def __init__(self,local_position,local_euler_angle,local_scale,parent=None):
