@@ -23,7 +23,7 @@ class Animation(object):
 		return self.sprite_sheet.get_sprite(row, col)
 
 	def set_speed(self, speed):
-		self.speed = speed;
+		self.speed = speed
 		self.rate = (1.0 * self.duration / self.sprite_number) * (1 / self.speed)
 
 # ===================================================
@@ -45,6 +45,8 @@ class Animator():
 
 	def set_animation(self, id):
 		if id in self.animations:
+			if self.current_animation_id == id:
+				return
 			self.timer = 0
 			self.anim_timer = 0
 			self.current_animation_id = id

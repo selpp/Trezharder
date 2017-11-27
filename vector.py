@@ -41,9 +41,9 @@ class Vector(object):
 		return sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
 
 	def normalized(self):
-		n = max(abs(self.x), abs(self.y))
+		n = sqrt(self.x**2 + self.y**2)
 		if n == 0:
-			raise NameError('Division by zero')
+			return self
 		return self / n
 
 	def __str__(self):
