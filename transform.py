@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from vector import Vector
-from loging import debug
+from logging import debug
 
 class Transform:
     '''
