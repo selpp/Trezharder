@@ -17,6 +17,7 @@ class Collider:
         self.scale = scale
         PhysicsManager.get_instance().add_collider(self)
         
+        
     def get_tag(self):
         return self.parent_transform.get_tag()
     
