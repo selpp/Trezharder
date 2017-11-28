@@ -23,17 +23,18 @@ class PhysicsManager(object):
         self.moved_rigidbody.put(rigidbody)
         
     def update_collision(self):
-        #print('in')
-        #print(self.moved_rigidbody.empty())
         while not self.moved_rigidbody.empty():
             rb = self.moved_rigidbody.get()
-            this_collider = rb.get_collider()
-            for collider in self.colliders:
-                if collider != this_collider and this_collider.try_collision(collider):
-                    if collider.is_trigger_activate() or this_collider.is_trigger_activate():
-                        self.add_trigger(this_collider,collider)
-                    else:
-                        rb.cancel_movement(collider)
+            these_colliders = rb.get_triggers()[:]
+            these_colliders.append(rb.get_collider())
+            for this_collider in these_colliders:
+                for collider in self.colliders:
+                    if collider != this_collider and this_collider.try_collision(collider):
+                        if collider.is_trigger_activate() or this_collider.is_trigger_activate():
+                            self.add_trigger(this_collider,collider)
+                        else:
+                            rb.cancel_movement(collider)
+                        
         self.trigger_update()
                         
     def trigger_update(self):
