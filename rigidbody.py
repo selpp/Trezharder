@@ -33,7 +33,12 @@ class Rigidbody:
         '''
             
     def cancel_movement(self,other_collider):
-        self.transform.move(self.last_movement * -1)
+        self.transform.move(Vector(-self.last_movement.x , 0.0))
+        if self.collider.try_collision(other_collider):
+            self.transform.move(Vector(self.last_movement.x , -self.last_movement.y))
+            if self.collider.try_collision(other_collider):
+                self.transform.move(Vector(-self.last_movement.x , 0.0))
+            
         
     def get_collider(self):
         return self.collider
