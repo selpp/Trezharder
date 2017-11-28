@@ -22,6 +22,9 @@ class TileMap(object):
 		if self.collider is not None:
 			self.collider.draw_debug(screen)
 
+	def z_buff(self, z_index, z_buffer):
+		z_buffer.insert(z_index, self)
+
 class MapManager(object):
 	def __init__(self, data_manager):
 		self.map = None
@@ -90,6 +93,13 @@ class MapManager(object):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw_debug(screen)
 
+	def z_buff(self, z_index, z_buffer):
+		if self.map is None:
+			return
+		for y in range(len(self.map)):
+			for x in range(len(self.map[0])):
+				self.map[y][x].z_buff(z_index, z_buffer)
+
 # ===================================================
 # EXAMPLE: Input Manager test with key actions
 
@@ -105,6 +115,7 @@ if __name__ == '__main__':
     from input_manager import InputManager
     from physics_manager import PhysicsManager
     from rigidbody import Rigidbody
+    from z_buffer import ZBuffer
 
     # =====================================================================
 
@@ -214,6 +225,9 @@ if __name__ == '__main__':
             draw_pos = self.transform.get_position() - scale
             screen.blit(self.animator.current_sprite, (draw_pos.x, draw_pos.y))
 
+        def z_buff(self, z_index, z_buffer):
+        	z_buffer.insert(z_index, self)
+
     # ===== SCREEN ==================
     width = 800
     height = 600
@@ -223,6 +237,7 @@ if __name__ == '__main__':
 
     # ===== ENTITIES ================
     data = DataManager()    
+    z_buffer = ZBuffer()
     
     player = Player(data)
     player.transform.get_position().x = 6 * 100.0 + 50.0
@@ -253,6 +268,7 @@ if __name__ == '__main__':
         InputManager.get_instance().update(event.get())
 
         screen.fill(BLACK)
+        z_buffer.reset()
 
         # ====================================================================
         # ===== Update =====
@@ -273,9 +289,11 @@ if __name__ == '__main__':
             #player.test_collision(fixed_bot.collider)
 
         # ===== Draw =====
-        map_manager.draw(screen)
-        player.draw(screen)
-        fixed_bot.draw(screen)
+        map_manager.z_buff(0, z_buffer)
+        player.z_buff(2, z_buffer)
+        fixed_bot.z_buff(2, z_buffer)
+
+        z_buffer.draw(screen)
 
         map_manager.draw_debug(screen)
         player.collider.draw_debug(screen)
