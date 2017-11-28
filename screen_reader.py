@@ -1,110 +1,19 @@
-# Map Manager
-from data_manager import TileInfos
-from vector import Vector
-from transform import Transform
-from collider import BoxCollider
+# Screen Reader
+from pygame import image, surfarray
 
 # ===================================================
-# MAPMANAGER
+# SCREENREADER
 
-class TileMap(object):
-	def __init__(self, id, position, angle, scale, data_manager, is_collider = False):
-		self.data_manager = data_manager
-		self.id = id
-		self.transform = Transform(position, angle, scale)
-		self.collider = None
-		if is_collider:
-			self.collider = BoxCollider(None, self.transform, Vector(0.0, 0.0), Vector(1.0, 1.0))
-
-	def draw(self, screen):
-		tile = self.data_manager.get_tile(self.id)
-		top_left = self.transform.get_position() - self.transform.get_scale() / 2.0
-		screen.blit(tile.img, (top_left.x, top_left.y))
-	
-	def draw_debug(self, screen):
-		if self.collider is not None:
-			self.collider.draw_debug(screen)
-
-	def z_buff(self, z_index, z_buffer):
-		z_buffer.insert(z_index, self)
-
-class MapManager(object):
-	def __init__(self, data_manager):
-		self.map = None
-		self.width = 0
-		self.height = 0
-		self.data_manager = data_manager
-
-		self.types = {
-			'CLAY': 0,
-			'STONE': 1,
-			'WOOD': 2
-		}
-
-		self.infos = TileInfos(100, 100)
-		self.data_manager.load_tile('CLAY', 'CLAY.jpg', self.infos)
-		self.data_manager.load_tile('STONE', 'STONE.jpg', self.infos)
-		self.data_manager.load_tile('WOOD', 'WOOD.jpg', self.infos)
-
-	def load(self, path = None):
-		self.map = []
-		with open(path) as file:
-			lines = file.readlines()
-			for line in lines:
-				row = []
-				for char in line:
-					if char != '\n':
-						row.append(int(char))
-				if len(row) > 0:
-					self.map.append(row)
-		self.width = len(self.map[0])
-		self.height = len(self.map)
-
-
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
-				position = Vector(x * self.infos.width + self.infos.width / 2.0, y * self.infos.height + self.infos.height / 2.0)
-				value = self.map[y][x]
-				is_collider = False if value == 0 else True
-				key = self.types.keys()[self.types.values().index(value)]
-				self.map[y][x] = TileMap(key, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-
-	def save(self, path):
-		if self.map is None:
-			return
-
-		msg = ''
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
-				msg += str(self.types[self.map[y][x].id])
-			msg += '\n'
-
-		with open(path, 'w') as file:
-			file.write(msg)
-
-	def draw(self, screen):
-		if self.map is None:
-			return
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
-				self.map[y][x].draw(screen)
-
-	def draw_debug(self, screen):
-		if self.map is None:
-			return
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
-				self.map[y][x].draw_debug(screen)
-
-	def z_buff(self, z_index, z_buffer):
-		if self.map is None:
-			return
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
-				self.map[y][x].z_buff(z_index, z_buffer)
+class ScreenReader(object):
+	@staticmethod
+	def screen_to_array(screen, width, height):
+		string_image = image.tostring(screen, 'RGB')
+		surf = image.fromstring(string_image, (width, height), 'RGB')
+		arr = surfarray.array3d(surf)
+		return arr
 
 # ===================================================
-# EXAMPLE: Input Manager test with key actions
+# EXAMPLE
 
 if __name__ == '__main__':
     from pygame import display, event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
@@ -112,10 +21,14 @@ if __name__ == '__main__':
     from data_manager import DataManager, SpriteSheetInfos
     from animation import Animation, Animator
     from monobehaviour import MonoBehaviour
+    from transform import Transform
+    from collider import BoxCollider
+    from vector import Vector
     from input_manager import InputManager
     from physics_manager import PhysicsManager
     from rigidbody import Rigidbody
     from z_buffer import ZBuffer
+    from map_manager import MapManager
 
     # =====================================================================
 
@@ -300,3 +213,7 @@ if __name__ == '__main__':
 
         # ====================================================================
         display.flip()
+
+        screen_image = ScreenReader.screen_to_array(screen, width, height)
+        print screen_image.shape
+        exit()
