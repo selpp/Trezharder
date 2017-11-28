@@ -13,6 +13,10 @@ class DebugDrawings(object):
 	def draw_rect(screen, position, width, height, color):
 		draw.rect(screen, color, (position.x - width / 2.0, position.y - height / 2.0, width, height), 2)		
 
+	@staticmethod
+	def draw_line(screen, start_point, end_point, color):
+		draw.line(screen, color, (start_point.x, start_point.y), (end_point.x, end_point.y), 2)
+
 # ===================================================
 # EXAMPLE
 
@@ -40,5 +44,7 @@ if __name__ == '__main__':
 		DebugDrawings.draw_circle(screen, Vector(450, 250), 20, (0, 0, 255))
 		DebugDrawings.draw_circle(screen, Vector(400, 370), 10, (0, 0, 255))
 		DebugDrawings.draw_rect(screen, Vector(400, 300), 200, 200, (0, 255, 0))
+
+		DebugDrawings.draw_line(screen, Vector(0, 0), Vector(800, 600), (255, 255, 0))
 
 		display.flip()
