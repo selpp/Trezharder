@@ -6,6 +6,7 @@ class PhysicsManager(object):
     def __init__(self):
         self.colliders = []
         self.moved_rigidbody = Queue()
+        self.trigger_collision = []
         
     instance = None
         
@@ -29,4 +30,23 @@ class PhysicsManager(object):
             this_collider = rb.get_collider()
             for collider in self.colliders:
                 if collider != this_collider and this_collider.try_collision(collider):
-                    rb.cancel_movement(collider)
+                    if collider.is_trigger_activate() or this_collider.is_trigger_activate():
+                        self.add_trigger(this_collider,collider)
+                    else:
+                        rb.cancel_movement(collider)
+        self.trigger_update()
+                        
+    def trigger_update(self):
+        for current_collision in self.trigger_collision:
+            if not current_collision[0].try_collision(current_collision[1]):
+                self.trigger_collision.remove(current_collision)
+                current_collision[0].set_on_collision(False)
+                current_collision[1].set_on_collision(False)
+    
+    def add_trigger(self,collider1,collider2):
+        for current_collision in self.trigger_collision:
+            if ((collider1 in current_collision) and (collider2 in current_collision)):
+                return
+        self.trigger_collision.append([collider1,collider2])
+        collider1.set_on_collision(True)
+        collider2.set_on_collision(True)
