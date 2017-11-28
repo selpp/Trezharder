@@ -4,6 +4,7 @@ from transform import Transform
 from vector import Vector
 from pygame import draw, Rect
 from physics_manager import PhysicsManager
+from debug_drawings import DebugDrawings
 
 class Collider:
     __metaclass__ = ABCMeta
@@ -56,14 +57,7 @@ class BoxCollider(Collider):
 
     def draw_debug(self, screen):
         x, y, w, h = self.get_world_box()
-        top_left_x = x - w
-        top_left_y = y - h 
-
-        draw.rect(screen, (0, 255, 0), Rect((top_left_x, top_left_y), (w * 2, 1)))
-        draw.rect(screen, (0, 255, 0), Rect((top_left_x, top_left_y + h * 2), (w * 2, 1)))
-
-        draw.rect(screen, (0, 255, 0), Rect((top_left_x, top_left_y), (1, h * 2)))
-        draw.rect(screen, (0, 255, 0), Rect((top_left_x + w * 2, top_left_y), (1, h * 2)))
+        DebugDrawings.draw_rect(screen, Vector(x, y), w * 2, h * 2, (0, 255, 0))
 
 if __name__ == '__main__':
     from pygame import display, event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
