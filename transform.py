@@ -13,13 +13,14 @@ class Transform:
         parent : A Transform representing the parent Transform useful to compute the world coord
     '''
     
-    def __init__(self,local_position,local_euler_angle,local_scale,parent=None):
+    def __init__(self,local_position,local_euler_angle,local_scale,parent=None,tag=''):
         self.local_position = local_position
         self.local_euler_angle = local_euler_angle
         self.local_scale = local_scale
         self.parent = parent
         self.got_updated = False
         self.update_global_state()
+        self.tag = tag
         debug('WARNING : TRANSFORM GLOBAL STATE HAVEN\'T BEEN DEVELOP YET #NOFEATURE !!!',3)
         debug('PARENT SHOULD ALWAYS BE NONE',3)
         
@@ -53,6 +54,9 @@ class Transform:
     def get_scale(self):
         self.update_global_state()
         return self.scale
+        
+    def get_tag(self):
+        return self.tag
     
     def __str__(self):
         self.update_global_state()
