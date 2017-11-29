@@ -1,4 +1,4 @@
-# Player
+# Bot
 from pygame import event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
 from data_manager import DataManager, SpriteSheetInfos
 from animation import Animation, Animator
@@ -13,17 +13,17 @@ from vector import Vector
 from collider import BoxCollider
 
 # ===================================================
-# PLAYERFSM
+# BOTFSM
 
-class PlayerFSM(FSM):
+class BotFSM(FSM):
 	def __init__(self):
 		FSM.__init__(self)
 
-	def update(self, dt, input_manager, animator, velocity):
+	def update(self, dt, animator, velocity, action_vector):
 		if self.state.does_exit:
 			self.state = self.state.exit(animator)
 		else:
-			self.state.update(dt, input_manager, animator, velocity)
+			self.state.update(dt, animator, velocity, action_vector)
 
 	def fixed_update(self, fixed_dt, rigidbody, velocity):
 		if self.state.does_exit:
@@ -32,9 +32,9 @@ class PlayerFSM(FSM):
 			self.state.fixed_update(fixed_dt, rigidbody, velocity)
 
 # ===================================================
-# PLAYERSTATEWALKRUN
+# BOTSTATEWALKRUN
 
-class PlayerStateWalkRunState(State):
+class BotStateWalkRunState(State):
 	def __init__(self, animator):
 		self.does_exit = False
 		self.timer = 0
@@ -47,35 +47,26 @@ class PlayerStateWalkRunState(State):
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
 		animator.set_animation('DOWN')
+
+		self.shift = False
     
-	def get_direction(self, input_manager):
-		move_x, move_y = 0, 0
+	def get_direction(self, action_vector):
+		move_x, move_y = action_vector[0], action_vector[1]
 
-		up = input_manager.is_key_pressed('UP')
-		down = input_manager.is_key_pressed('DOWN')
-		left = input_manager.is_key_pressed('LEFT')
-		right = input_manager.is_key_pressed('RIGHT')
-
-		if up:
-			move_y = -1.0
-		elif down:
-			move_y = 1.0
-		if left:
-			move_x = -1.0
-		elif right:
-			move_x = 1.0
-
-		if not(up or down or left or right):
+		if abs(move_x) < 0.01 and abs(move_y) < 0.01:
 			self.does_exit = True
 
 		return Vector(move_x, move_y).normalized()
 
-	def set_all_speeds(self, input_manager, animator):
-		if input_manager.is_key_down('LSHIFT'):
+	def set_all_speeds(self, animator, action_vector):
+		shift = (action_vector[2] > 0.5)
+		if not self.shift and shift:
+			self.shift = shift
 			self.animation_speed *= self.animation_speed_factor
 			self.speed *= self.speed_factor
 			animator.current_animation.set_speed(self.animation_speed)
-		elif input_manager.is_key_up('LSHIFT'):
+		elif self.shift and not shift:
+			self.shift = shift
 			self.animation_speed /= self.animation_speed_factor
 			self.speed /= self.speed_factor
 			animator.current_animation.set_speed(self.animation_speed)
@@ -94,9 +85,9 @@ class PlayerStateWalkRunState(State):
 		elif velocity.y > 0:
 			animator.set_animation('DOWN')
 
-	def update(self, dt, input_manager, animator, velocity): 
-		velocity.set(self.get_direction(input_manager))
-		self.set_all_speeds(input_manager, animator)
+	def update(self, dt, animator, velocity, action_vector): 
+		velocity.set(self.get_direction(action_vector))
+		self.set_all_speeds(animator, action_vector)
 		self.set_animations(animator, velocity)
 
 	def fixed_update(self, fixed_dt, rigidbody, velocity):
@@ -104,15 +95,15 @@ class PlayerStateWalkRunState(State):
 		rigidbody.update(fixed_dt)
 
 	def exit(self, animator):
-		return PlayerStateIdle(animator)
+		return BotStateIdle(animator)
 
 	def __str__(self):
-		return 'Player State: Walk/Run'
+		return 'Bot State: Walk/Run'
 
 # ===================================================
-# PLAYERSTATEIDLE
+# BOTSTATEIDLE
 
-class PlayerStateIdle(State):
+class BotStateIdle(State):
 	def __init__(self, animator):
 		self.does_exit = False
 		self.timer = 0
@@ -131,32 +122,30 @@ class PlayerStateIdle(State):
  		elif current_animation_id == 'RIGHT':
  			animator.set_animation('IDLE_RIGHT')
 
-	def update(self, dt, input_manager, animator, velocity): 
-		up = input_manager.is_key_pressed('UP')
-		down = input_manager.is_key_pressed('DOWN')
-		left = input_manager.is_key_pressed('LEFT')
-		right = input_manager.is_key_pressed('RIGHT')
-		if up or down or left or right:
+	def update(self, dt, animator, velocity, action_vector): 
+		x, y = action_vector[0], action_vector[1]
+		if abs(x) > 0.01 or abs(y) > 0.01:
 			self.does_exit = True
 
 	def fixed_update(self, fixed_dt, rigidbody, velocity):
 		pass
 
 	def exit(self, animator):
-		return PlayerStateWalkRunState(animator)
+		return BotStateWalkRunState(animator)
 
 	def __str__(self):
-		return 'Player State: Idle'
+		return 'Bot State: Idle'
 
 # ===================================================
-# PLAYER
+# BOT
 
-class Player(MonoBehaviour):
+class Bot(MonoBehaviour):
     def __init__(self, data_manager):
         self.start(data_manager)
 
     def start(self, data_manager):
-		self.state_machine = PlayerFSM()
+		self.state_machine = BotFSM()
+		self.action_vector = [0, 0, 0]
 
 		# ================= Transform =========================
 		self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
@@ -193,14 +182,11 @@ class Player(MonoBehaviour):
 		self.animator.add_animation('IDLE_UP', a_idle_up)
 		self.animator.add_animation('IDLE_LEFT', a_idle_left)
 
-		# ============== Input Manager =====================
-		self.input_manager = InputManager.get_instance()
-		
-		self.state_machine.state = PlayerStateIdle(self.animator)
+		self.state_machine.state = BotStateIdle(self.animator)
 
     def update(self, dt):
 		self.animator.update(dt)
-		self.state_machine.update(dt, self.input_manager, self.animator, self.velocity)
+		self.state_machine.update(dt, self.animator, self.velocity, self.action_vector)
 
     def fixed_update(self, fixed_dt):
     	self.state_machine.fixed_update(fixed_dt, self.rb, self.velocity)
@@ -220,6 +206,8 @@ if __name__ == '__main__':
     from pygame import display
     from time import clock
     from map_manager import MapManager
+    from player import Player
+    from random import randint
 
     # ===== SCREEN ==================
     width = 800
@@ -236,6 +224,10 @@ if __name__ == '__main__':
     player.transform.get_position().x = 6 * 100.0 + 50.0
     player.transform.get_position().y = 4 * 100.0 + 50.0
 
+    bot = Bot(data)
+    bot.transform.get_position().x = 100.0 + 50.0
+    bot.transform.get_position().y = 100.0 + 50.0
+
     map_manager = MapManager(data)
     map_manager.load(path = 'MAP0.map')
 
@@ -251,6 +243,11 @@ if __name__ == '__main__':
     # ===== GET PhysicsManager ========
     pm = PhysicsManager.get_instance()
 
+    # ===== Random Bot actions ========
+    bot_timer = 0
+    bot_action = [1, 0, 1]
+    bot.action_vector = bot_action
+
     # ===== LOOP ====================
     while True:
         InputManager.get_instance().update(event.get())
@@ -263,7 +260,16 @@ if __name__ == '__main__':
         dt = clock() - current_time
         current_time += dt
 
+        bot_timer += dt
+
         player.update(dt)
+        bot.update(dt)
+
+        if bot_timer > 1:
+			bot_timer = 0
+			# v_x, v_y, shift
+			bot_action = [round(randint(-1, 1)), round(randint(-1, 1)), randint(0, 1)]
+			bot.action_vector = bot_action
 
         # ===== FixedUpdate =====
         if current_fixed_time % fixed_rate:
@@ -271,11 +277,13 @@ if __name__ == '__main__':
             current_fixed_time += fixed_dt
 
             player.fixed_update(fixed_dt)
+            bot.fixed_update(fixed_dt)
             pm.update_collision()
 
         # ===== Draw =====
         map_manager.z_buff(0, z_buffer)
         player.z_buff(2, z_buffer)
+        bot.z_buff(2, z_buffer)
 
         z_buffer.draw(screen)
 
