@@ -3,9 +3,10 @@ from physics_manager import PhysicsManager
 from vector import Vector
 
 class Rigidbody:
-    def __init__(self,transform,collider):
+    def __init__(self,transform,collider,triggers=[]):
         self.transform = transform
         self.collider = collider
+        self.triggers = triggers
         self.force = Vector(0.0,0.0)
         self.velocity = Vector(0.0,0.0)
         self.acceleration = Vector(0.0,0.0)
@@ -23,6 +24,7 @@ class Rigidbody:
             self.transform.move(movement)
             self.last_movement = movement
             PhysicsManager.get_instance().add_moved_rigidbody(self)
+                
         '''
         last_acceleration = self.acceleration
         movement = velocity * delta_time + (last_acceleration  * 0.5 * delta_time * delta_time)
@@ -33,8 +35,15 @@ class Rigidbody:
         '''
             
     def cancel_movement(self,other_collider):
-        self.transform.move(self.last_movement * -1)
+        self.transform.move(Vector(-self.last_movement.x , 0.0))
+        if self.collider.try_collision(other_collider):
+            self.transform.move(Vector(self.last_movement.x , -self.last_movement.y))
+            if self.collider.try_collision(other_collider):
+                self.transform.move(Vector(-self.last_movement.x , 0.0))
+            
         
     def get_collider(self):
         return self.collider
         
+    def get_triggers(self):
+        return self.triggers

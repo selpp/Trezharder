@@ -10,18 +10,26 @@ class Collider:
     __metaclass__ = ABCMeta
     
     @abstractmethod
-    def __init__(self,collision_handler,parent_transform,position,scale):
+    def __init__(self,collision_handler,parent_transform,position,is_trigger = False):
         self.handler = collision_handler
         self.position = position
         self.parent_transform = parent_transform
-        self.scale = scale
+        self.is_trigger = is_trigger
+        self.is_on_collision = False
         PhysicsManager.get_instance().add_collider(self)
+        
         
     def get_tag(self):
         return self.parent_transform.get_tag()
     
     def on_collision(self):
         self.handler()
+        
+    def is_trigger_activate(self):
+        return self.is_trigger
+        
+    def set_on_collision(self,state):
+        self.is_on_collision = state
         
     @abstractmethod
     def try_collision(self,collider):
@@ -32,12 +40,16 @@ class Collider:
         pass
     
 class BoxCollider(Collider):
-    def __init__(self,collision_handler,parent_transform,position,scale):
-        Collider.__init__(self,collision_handler,parent_transform,position,scale)
+    def __init__(self,collision_handler,parent_transform,position,scale,is_trigger = False):
+        Collider.__init__(self,collision_handler,parent_transform,position,is_trigger)
+        self.scale = scale
         
     def try_collision(self,collider):
         if isinstance(collider,BoxCollider):
             return self.collision_with_box(collider)
+        if isinstance(collider,CircleCollider):
+            return self.collision_with_circle(collider)
+        return False
         
     def collision_with_box(self,box):
         x,y,w,h = self.get_world_box()
@@ -49,6 +61,13 @@ class BoxCollider(Collider):
                 return True
         return False
         
+    def collision_with_circle(self,circle):
+        xb,yb,w,h = self.get_world_box()
+        xc,yc,r = circle.get_world_circle()
+        
+        box_proj = Vector(min(max(xc , xb - w),xb + w),min(max(yc , yb - h),yb + h))
+        return (box_proj - Vector(xc,yc)).magnitude() < r
+    
     def get_world_box(self):
         x = self.position.x + self.parent_transform.get_position().x
         y = self.position.y + self.parent_transform.get_position().y
@@ -60,6 +79,37 @@ class BoxCollider(Collider):
     def draw_debug(self, screen):
         x, y, w, h = self.get_world_box()
         DebugDrawings.draw_rect(screen, Vector(x, y), w * 2, h * 2, (0, 255, 0))
+        
+class CircleCollider(Collider):
+    def __init__(self,collision_handler,parent_transform,position,radius,is_trigger = False):
+        Collider.__init__(self,collision_handler,parent_transform,position,is_trigger)
+        self.radius = radius
+        
+    def try_collision(self,collider):
+        if isinstance(collider,CircleCollider):
+            return self.collision_with_circle(collider)
+        if isinstance(collider,BoxCollider):
+            return self.collision_with_box(collider)
+        return False
+            
+    def collision_with_circle(self,circle):
+        x , y , r = self.get_world_circle()
+        x2 , y2 , r2 = circle.get_world_circle()
+        return Vector(x - x2,y - y2).magnitude() < r + r2
+
+    def collision_with_box(self,box):
+        return box.collision_with_circle(self)
+    
+    def get_world_circle(self):
+        x = self.position.x + self.parent_transform.get_position().x
+        y = self.position.y + self.parent_transform.get_position().y
+        r = self.radius * max(self.parent_transform.get_scale().x,self.parent_transform.get_scale().y)
+        
+        return x,y,r
+    
+    def draw_debug(self,screen):
+        x , y , r = self.get_world_circle()
+        DebugDrawings.draw_circle(screen,Vector(int(x),int(y)),int(r),(0,255,0))
 
 if __name__ == '__main__':
     from pygame import display, event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
