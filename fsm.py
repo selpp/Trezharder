@@ -7,26 +7,21 @@ from abc import ABCMeta, abstractmethod
 class State(object):
 	__metaclass__ = ABCMeta
 
-	@abstractmethod
 	def __init__(self):
 		self.does_exit = False
 		self.timer = 0
 		self.enter()
 
-	@abstractmethod
 	def enter(self):
 		pass
 
-	@abstractmethod
 	def update(self, dt):
 		self.timer += dt
 		pass
 
-	@abstractmethod
 	def exit(self):
 		pass
 
-	@abstractmethod
 	def __str__(self):
 		return 'State: Base Class'
 
@@ -36,11 +31,9 @@ class State(object):
 class FSM(object):
 	__metaclass__ = ABCMeta
 
-	@abstractmethod
 	def __init__(self):
 		self.state = None
 
-	@abstractmethod
 	def update(self, dt):
 		if self.state.does_exit:
 			self.state = self.state.exit()

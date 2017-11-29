@@ -294,9 +294,9 @@ if __name__ == '__main__':
 
         z_buffer.draw(screen)
 
-        map_manager.draw_debug(screen)
-        player.collider.draw_debug(screen)
-        fixed_bot.collider.draw_debug(screen)
+        #map_manager.draw_debug(screen)
+        #player.collider.draw_debug(screen)
+        #fixed_bot.collider.draw_debug(screen)
 
         # ====================================================================
         display.flip()
