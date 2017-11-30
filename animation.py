@@ -37,6 +37,7 @@ class Animator():
 		self.current_animation_id = None
 		self.current_animation = None
 		self.current_sprite = None
+		self.current_animation_finished = False
 
 	def add_animation(self, id, animation):
 		if id in self.animations:
@@ -47,6 +48,7 @@ class Animator():
 		if id in self.animations:
 			if self.current_animation_id == id:
 				return
+			self.current_animation_finished = False
 			self.timer = 0
 			self.anim_timer = 0
 			self.current_animation_id = id
@@ -60,6 +62,7 @@ class Animator():
 		if self.current_animation is None:
 			return 
 		if self.current_animation.loop == False and self.timer > self.current_animation.duration:
+			self.current_animation_finished = True
 			return
 
 		if self.anim_timer > self.current_animation.rate:
@@ -77,6 +80,7 @@ class Animator():
 		msg += '\n  rate: ' + str(self.current_animation.rate)
 		msg += '\n  timer: ' + str(self.timer)
 		msg += '\n  anim_timer: ' + str(self.anim_timer)
+		msg += '\n  anim_finished: ' + str(self.current_animation_finished)
 		return msg
 
 # ===================================================

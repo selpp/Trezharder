@@ -19,42 +19,42 @@ class PlayerFSM(FSM):
 	def __init__(self):
 		FSM.__init__(self)
 
-	def update(self, dt, input_manager, animator, velocity):
+	def update(self, dt, player):
 		if self.state.does_exit:
-			self.state = self.state.exit(animator)
+			self.state = self.state.exit(player)
 		else:
-			self.state.update(dt, input_manager, animator, velocity)
+			self.state.update(dt, player)
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
+	def fixed_update(self, fixed_dt, player):
 		if self.state.does_exit:
 			return
 		else:
-			self.state.fixed_update(fixed_dt, rigidbody, velocity)
+			self.state.fixed_update(fixed_dt, player)
 
 # ===================================================
 # PLAYERSTATEWALKRUN
 
 class PlayerStateWalkRunState(State):
-	def __init__(self, animator):
+	def __init__(self, player):
 		self.does_exit = False
 		self.timer = 0
-		self.enter(animator)
+		self.enter(player)
 
-	def enter(self, animator):
+	def enter(self, player):
 		self.speed = 200
 		self.speed_factor = 2
 
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
-		animator.set_animation('DOWN')
+		player.animator.set_animation('DOWN')
     
-	def get_direction(self, input_manager):
+	def get_direction(self, player):
 		move_x, move_y = 0, 0
 
-		up = input_manager.is_key_pressed('UP')
-		down = input_manager.is_key_pressed('DOWN')
-		left = input_manager.is_key_pressed('LEFT')
-		right = input_manager.is_key_pressed('RIGHT')
+		up = player.input_manager.is_key_pressed('UP')
+		down = player.input_manager.is_key_pressed('DOWN')
+		left = player.input_manager.is_key_pressed('LEFT')
+		right = player.input_manager.is_key_pressed('RIGHT')
 
 		if up:
 			move_y = -1.0
@@ -68,43 +68,43 @@ class PlayerStateWalkRunState(State):
 		if not(up or down or left or right):
 			self.does_exit = True
 
-		return Vector(move_x, move_y).normalized()
+		player.velocity.set(Vector(move_x, move_y).normalized())
 
-	def set_all_speeds(self, input_manager, animator):
-		if input_manager.is_key_down('LSHIFT'):
+	def set_all_speeds(self, player):
+		if player.input_manager.is_key_down('LSHIFT'):
 			self.animation_speed *= self.animation_speed_factor
 			self.speed *= self.speed_factor
-			animator.current_animation.set_speed(self.animation_speed)
-		elif input_manager.is_key_up('LSHIFT'):
+			player.animator.current_animation.set_speed(self.animation_speed)
+		elif player.input_manager.is_key_up('LSHIFT'):
 			self.animation_speed /= self.animation_speed_factor
 			self.speed /= self.speed_factor
-			animator.current_animation.set_speed(self.animation_speed)
+			player.animator.current_animation.set_speed(self.animation_speed)
 
-	def set_animations(self, animator, velocity):
-		if velocity.x < 0 and (velocity.y < 0 or velocity.y > 0):
-			animator.set_animation('LEFT')
-		elif velocity.x > 0 and (velocity.y < 0 or velocity.y > 0):
-			animator.set_animation('RIGHT')
-		elif velocity.x < 0:
-			animator.set_animation('LEFT')
-		elif velocity.x > 0:
-			animator.set_animation('RIGHT')
-		elif velocity.y < 0:
-			animator.set_animation('UP')
-		elif velocity.y > 0:
-			animator.set_animation('DOWN')
+	def set_animations(self, player):
+		if player.velocity.x < 0 and (player.velocity.y < 0 or player.velocity.y > 0):
+			player.animator.set_animation('LEFT')
+		elif player.velocity.x > 0 and (player.velocity.y < 0 or player.velocity.y > 0):
+			player.animator.set_animation('RIGHT')
+		elif player.velocity.x < 0:
+			player.animator.set_animation('LEFT')
+		elif player.velocity.x > 0:
+			player.animator.set_animation('RIGHT')
+		elif player.velocity.y < 0:
+			player.animator.set_animation('UP')
+		elif player.velocity.y > 0:
+			player.animator.set_animation('DOWN')
 
-	def update(self, dt, input_manager, animator, velocity): 
-		velocity.set(self.get_direction(input_manager))
-		self.set_all_speeds(input_manager, animator)
-		self.set_animations(animator, velocity)
+	def update(self, dt, player): 
+		self.get_direction(player)
+		self.set_all_speeds(player)
+		self.set_animations(player)
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
-		rigidbody.set_velocity(velocity * self.speed)
-		rigidbody.update(fixed_dt)
+	def fixed_update(self, fixed_dt, player):
+		player.rigidbody.set_velocity(player.velocity * self.speed)
+		player.rigidbody.update(fixed_dt)
 
-	def exit(self, animator):
-		return PlayerStateIdle(animator)
+	def exit(self, player):
+		return PlayerStateIdle(player)
 
 	def __str__(self):
 		return 'Player State: Walk/Run'
@@ -113,37 +113,37 @@ class PlayerStateWalkRunState(State):
 # PLAYERSTATEIDLE
 
 class PlayerStateIdle(State):
-	def __init__(self, animator):
+	def __init__(self, player):
 		self.does_exit = False
 		self.timer = 0
-		self.enter(animator)
+		self.enter(player)
 
-	def enter(self, animator):
-		current_animation_id = animator.current_animation_id
+	def enter(self, player):
+		current_animation_id = player.animator.current_animation_id
 		if current_animation_id is None:
- 			animator.set_animation('IDLE_DOWN')
+ 			player.animator.set_animation('IDLE_DOWN')
  		elif current_animation_id == 'UP':
- 			animator.set_animation('IDLE_UP')
+ 			player.animator.set_animation('IDLE_UP')
  		elif current_animation_id == 'DOWN':
- 			animator.set_animation('IDLE_DOWN')
+ 			player.animator.set_animation('IDLE_DOWN')
  		elif current_animation_id == 'LEFT':
- 			animator.set_animation('IDLE_LEFT')
+ 			player.animator.set_animation('IDLE_LEFT')
  		elif current_animation_id == 'RIGHT':
- 			animator.set_animation('IDLE_RIGHT')
+ 			player.animator.set_animation('IDLE_RIGHT')
 
-	def update(self, dt, input_manager, animator, velocity): 
-		up = input_manager.is_key_pressed('UP')
-		down = input_manager.is_key_pressed('DOWN')
-		left = input_manager.is_key_pressed('LEFT')
-		right = input_manager.is_key_pressed('RIGHT')
+	def update(self, dt, player): 
+		up = player.input_manager.is_key_pressed('UP')
+		down = player.input_manager.is_key_pressed('DOWN')
+		left = player.input_manager.is_key_pressed('LEFT')
+		right = player.input_manager.is_key_pressed('RIGHT')
 		if up or down or left or right:
 			self.does_exit = True
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
+	def fixed_update(self, fixed_dt, player):
 		pass
 
-	def exit(self, animator):
-		return PlayerStateWalkRunState(animator)
+	def exit(self, player):
+		return PlayerStateWalkRunState(player)
 
 	def __str__(self):
 		return 'Player State: Idle'
@@ -164,7 +164,7 @@ class Player(MonoBehaviour):
 
 		# ================= Collider ==========================
 		self.collider = BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3))
-		self.rb = Rigidbody(self.transform,self.collider)
+		self.rigidbody = Rigidbody(self.transform,self.collider)
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -173,8 +173,7 @@ class Player(MonoBehaviour):
 		infos = SpriteSheetInfos(6, 4, (scale.x, scale.y))
 		data_manager.load_sprite_sheet('TRUMP', 'TEST1.png', infos)
 		spriteSheet = data_manager.get_sprite_sheet('TRUMP')
-		duration = 0.2
-				
+		duration = 0.2		
 		a_down = Animation(spriteSheet, [(i, 0) for i in range(6)], duration, 1, loop = True)
 		a_right = Animation(spriteSheet, [(i, 1) for i in range(6)], duration, 1, loop = True)
 		a_up = Animation(spriteSheet, [(i, 2) for i in range(6)], duration, 1, loop = True)
@@ -196,14 +195,14 @@ class Player(MonoBehaviour):
 		# ============== Input Manager =====================
 		self.input_manager = InputManager.get_instance()
 		
-		self.state_machine.state = PlayerStateIdle(self.animator)
+		self.state_machine.state = PlayerStateIdle(self)
 
     def update(self, dt):
 		self.animator.update(dt)
-		self.state_machine.update(dt, self.input_manager, self.animator, self.velocity)
+		self.state_machine.update(dt, self)
 
     def fixed_update(self, fixed_dt):
-    	self.state_machine.fixed_update(fixed_dt, self.rb, self.velocity)
+    	self.state_machine.fixed_update(fixed_dt, self)
 
     def draw(self, screen):
         scale = self.transform.get_scale() / 2.0

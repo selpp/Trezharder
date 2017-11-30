@@ -19,83 +19,90 @@ class BotFSM(FSM):
 	def __init__(self):
 		FSM.__init__(self)
 
-	def update(self, dt, animator, velocity, action_vector):
+	def update(self, dt, bot):
 		if self.state.does_exit:
-			self.state = self.state.exit(animator)
+			self.state = self.state.exit(bot)
 		else:
-			self.state.update(dt, animator, velocity, action_vector)
+			self.state.update(dt, bot)
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
+	def fixed_update(self, fixed_dt, bot):
 		if self.state.does_exit:
 			return
 		else:
-			self.state.fixed_update(fixed_dt, rigidbody, velocity)
+			self.state.fixed_update(fixed_dt, bot)
 
 # ===================================================
 # BOTSTATEWALKRUN
 
 class BotStateWalkRunState(State):
-	def __init__(self, animator):
+	def __init__(self, bot):
 		self.does_exit = False
 		self.timer = 0
-		self.enter(animator)
+		self.explode = False
+		self.enter(bot)
 
-	def enter(self, animator):
+	def enter(self, bot):
 		self.speed = 200
 		self.speed_factor = 2
 
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
-		animator.set_animation('DOWN')
+		bot.animator.set_animation('DOWN')
 
 		self.shift = False
     
-	def get_direction(self, action_vector):
-		move_x, move_y = action_vector[0], action_vector[1]
+	def get_direction(self, bot):
+		move_x, move_y = bot.action_vector[0], bot.action_vector[1]
 
 		if abs(move_x) < 0.01 and abs(move_y) < 0.01:
 			self.does_exit = True
 
-		return Vector(move_x, move_y).normalized()
+		bot.velocity.set(Vector(move_x, move_y).normalized())
 
-	def set_all_speeds(self, animator, action_vector):
-		shift = (action_vector[2] > 0.5)
+	def set_all_speeds(self, bot):
+		shift = (bot.action_vector[2] > 0.5)
 		if not self.shift and shift:
 			self.shift = shift
 			self.animation_speed *= self.animation_speed_factor
 			self.speed *= self.speed_factor
-			animator.current_animation.set_speed(self.animation_speed)
+			bot.animator.current_animation.set_speed(self.animation_speed)
 		elif self.shift and not shift:
 			self.shift = shift
 			self.animation_speed /= self.animation_speed_factor
 			self.speed /= self.speed_factor
-			animator.current_animation.set_speed(self.animation_speed)
+			bot.animator.current_animation.set_speed(self.animation_speed)
 
-	def set_animations(self, animator, velocity):
-		if velocity.x < 0 and (velocity.y < 0 or velocity.y > 0):
-			animator.set_animation('LEFT')
-		elif velocity.x > 0 and (velocity.y < 0 or velocity.y > 0):
-			animator.set_animation('RIGHT')
-		elif velocity.x < 0:
-			animator.set_animation('LEFT')
-		elif velocity.x > 0:
-			animator.set_animation('RIGHT')
-		elif velocity.y < 0:
-			animator.set_animation('UP')
-		elif velocity.y > 0:
-			animator.set_animation('DOWN')
+	def set_animations(self, bot):
+		if bot.velocity.x < 0 and (bot.velocity.y < 0 or bot.velocity.y > 0):
+			bot.animator.set_animation('LEFT')
+		elif bot.velocity.x > 0 and (bot.velocity.y < 0 or bot.velocity.y > 0):
+			bot.animator.set_animation('RIGHT')
+		elif bot.velocity.x < 0:
+			bot.animator.set_animation('LEFT')
+		elif bot.velocity.x > 0:
+			bot.animator.set_animation('RIGHT')
+		elif bot.velocity.y < 0:
+			bot.animator.set_animation('UP')
+		elif bot.velocity.y > 0:
+			bot.animator.set_animation('DOWN')
 
-	def update(self, dt, animator, velocity, action_vector): 
-		velocity.set(self.get_direction(action_vector))
-		self.set_all_speeds(animator, action_vector)
-		self.set_animations(animator, velocity)
+	def update(self, dt, bot): 
+		if bot.action_vector[3] > 0.5:
+			self.explode = True
+			does_exit = True
+		else: 
+			self.get_direction(bot)
+			self.set_all_speeds(bot)
+			self.set_animations(bot)
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
-		rigidbody.set_velocity(velocity * self.speed)
-		rigidbody.update(fixed_dt)
+	def fixed_update(self, fixed_dt, bot):
+		bot.rigidbody.set_velocity(bot.velocity * self.speed)
+		bot.rigidbody.update(fixed_dt)
 
-	def exit(self, animator):
-		return BotStateIdle(animator)
+	def exit(self, bot):
+		if self.explode:
+			return BotStateExplode(bot)
+		return BotStateIdle(bot)
 
 	def __str__(self):
 		return 'Bot State: Walk/Run'
@@ -104,37 +111,71 @@ class BotStateWalkRunState(State):
 # BOTSTATEIDLE
 
 class BotStateIdle(State):
-	def __init__(self, animator):
+	def __init__(self, bot):
 		self.does_exit = False
 		self.timer = 0
-		self.enter(animator)
+		self.enter(bot)
+		self.explode = False
 
-	def enter(self, animator):
-		current_animation_id = animator.current_animation_id
+	def enter(self, bot):
+		current_animation_id = bot.animator.current_animation_id
 		if current_animation_id is None:
- 			animator.set_animation('IDLE_DOWN')
+ 			bot.animator.set_animation('IDLE_DOWN')
  		elif current_animation_id == 'UP':
- 			animator.set_animation('IDLE_UP')
+ 			bot.animator.set_animation('IDLE_UP')
  		elif current_animation_id == 'DOWN':
- 			animator.set_animation('IDLE_DOWN')
+ 			bot.animator.set_animation('IDLE_DOWN')
  		elif current_animation_id == 'LEFT':
- 			animator.set_animation('IDLE_LEFT')
+ 			bot.animator.set_animation('IDLE_LEFT')
  		elif current_animation_id == 'RIGHT':
- 			animator.set_animation('IDLE_RIGHT')
+ 			bot.animator.set_animation('IDLE_RIGHT')
 
-	def update(self, dt, animator, velocity, action_vector): 
-		x, y = action_vector[0], action_vector[1]
-		if abs(x) > 0.01 or abs(y) > 0.01:
-			self.does_exit = True
+	def update(self, dt, bot):
+		if bot.action_vector[3] > 0.5:
+			self.explode = True
+			does_exit = True
+		else: 
+			x, y = bot.action_vector[0], bot.action_vector[1]
+			if abs(x) > 0.01 or abs(y) > 0.01:
+				self.does_exit = True
 
-	def fixed_update(self, fixed_dt, rigidbody, velocity):
+	def fixed_update(self, fixed_dt, bot):
 		pass
 
-	def exit(self, animator):
-		return BotStateWalkRunState(animator)
+	def exit(self, bot):
+		if self.explode:
+			return BotStateExplode(bot)
+		return BotStateWalkRunState(bot)
 
 	def __str__(self):
 		return 'Bot State: Idle'
+
+# ===================================================
+# BOTSTATEEXPLODE
+
+class  BotStateExplode(State):
+	def __init__(self, bot):
+		self.does_exit = False
+		self.timer = 0
+		self.enter(bot)
+
+	def enter(self, bot):
+ 		bot.animator.set_animation('EXPLODE')
+
+	def update(self, dt, bot):
+		if bot.explode:
+			return
+		if bot.animator.current_animation_finished:
+			bot.explode = True
+
+	def fixed_update(self, fixed_dt, bot):
+		pass
+
+	def exit(self, bot):
+		return None
+
+	def __str__(self):
+		return 'Bot State: Explode'
 
 # ===================================================
 # BOT
@@ -146,14 +187,15 @@ class Bot(MonoBehaviour):
     def start(self, data_manager):
 		self.state_machine = BotFSM()
 		self.action_vector = [0, 0, 0]
+		self.explode = False
 
 		# ================= Transform =========================
 		self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
-		self.velocity = Vector(0.0, 0.0)        
+		self.velocity = Vector(0.0, 0.0)
 
 		# ================= Collider ==========================
 		self.collider = BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3))
-		self.rb = Rigidbody(self.transform,self.collider)
+		self.rigidbody = Rigidbody(self.transform, self.collider)
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -163,7 +205,6 @@ class Bot(MonoBehaviour):
 		data_manager.load_sprite_sheet('TRUMP', 'TEST1.png', infos)
 		spriteSheet = data_manager.get_sprite_sheet('TRUMP')
 		duration = 0.2
-				
 		a_down = Animation(spriteSheet, [(i, 0) for i in range(6)], duration, 1, loop = True)
 		a_right = Animation(spriteSheet, [(i, 1) for i in range(6)], duration, 1, loop = True)
 		a_up = Animation(spriteSheet, [(i, 2) for i in range(6)], duration, 1, loop = True)
@@ -173,6 +214,14 @@ class Bot(MonoBehaviour):
 		a_idle_up = Animation(spriteSheet, [(1, 2)], duration, 1, loop = True)
 		a_idle_left = Animation(spriteSheet, [(1, 3)], duration, 1, loop = True)
 
+		scale = Vector(128.0, 128.0)
+		infos = SpriteSheetInfos(4, 4, (scale.x, scale.y))
+		data_manager.load_sprite_sheet('EXPLOSION', 'EXPLOSION.png', infos)
+		spriteSheet = data_manager.get_sprite_sheet('EXPLOSION')
+		duration = 0.2
+		anim_pos = [(x, y) for y in range(4) for x in range(4)]
+		a_explode = Animation(spriteSheet, anim_pos, duration, 1, loop = False)
+
 		self.animator.add_animation('DOWN', a_down)
 		self.animator.add_animation('RIGHT', a_right)
 		self.animator.add_animation('UP', a_up)
@@ -181,15 +230,16 @@ class Bot(MonoBehaviour):
 		self.animator.add_animation('IDLE_RIGHT', a_idle_right)
 		self.animator.add_animation('IDLE_UP', a_idle_up)
 		self.animator.add_animation('IDLE_LEFT', a_idle_left)
+		self.animator.add_animation('EXPLODE', a_explode)
 
-		self.state_machine.state = BotStateIdle(self.animator)
+		self.state_machine.state = BotStateIdle(self)
 
     def update(self, dt):
 		self.animator.update(dt)
-		self.state_machine.update(dt, self.animator, self.velocity, self.action_vector)
+		self.state_machine.update(dt, self)
 
     def fixed_update(self, fixed_dt):
-    	self.state_machine.fixed_update(fixed_dt, self.rb, self.velocity)
+    	self.state_machine.fixed_update(fixed_dt, self)
 
     def draw(self, screen):
         scale = self.transform.get_scale() / 2.0
@@ -245,7 +295,8 @@ if __name__ == '__main__':
 
     # ===== Random Bot actions ========
     bot_timer = 0
-    bot_action = [1, 0, 1]
+    # v_x, v_y, shift, fire1
+    bot_action = [1, 0, 1, 0]
     bot.action_vector = bot_action
 
     # ===== LOOP ====================
@@ -267,8 +318,8 @@ if __name__ == '__main__':
 
         if bot_timer > 1:
 			bot_timer = 0
-			# v_x, v_y, shift
-			bot_action = [round(randint(-1, 1)), round(randint(-1, 1)), randint(0, 1)]
+			# v_x, v_y, shift, fire1
+			bot_action = [round(randint(-1, 1)), round(randint(-1, 1)), randint(0, 1), randint(0, 1)]
 			bot.action_vector = bot_action
 
         # ===== FixedUpdate =====
