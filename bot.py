@@ -42,9 +42,11 @@ class BotStateWalkRunState(State):
 		self.enter(bot)
 
 	def enter(self, bot):
+		self.initial_speed = 200
 		self.speed = 200
 		self.speed_factor = 2
 
+		self.initial_animation_speed = 1
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
 		bot.animator.set_animation('DOWN')
@@ -63,13 +65,13 @@ class BotStateWalkRunState(State):
 		shift = (bot.action_vector[2] > 0.5)
 		if not self.shift and shift:
 			self.shift = shift
-			self.animation_speed *= self.animation_speed_factor
-			self.speed *= self.speed_factor
+			self.animation_speed = self.initial_animation_speed * self.animation_speed_factor
+			self.speed = self.initial_speed * self.speed_factor
 			bot.animator.current_animation.set_speed(self.animation_speed)
 		elif self.shift and not shift:
 			self.shift = shift
-			self.animation_speed /= self.animation_speed_factor
-			self.speed /= self.speed_factor
+			self.animation_speed = self.initial_animation_speed
+			self.speed = self.initial_speed
 			bot.animator.current_animation.set_speed(self.animation_speed)
 
 	def set_animations(self, bot):

@@ -41,9 +41,11 @@ class PlayerStateWalkRunState(State):
 		self.enter(player)
 
 	def enter(self, player):
+		self.initial_speed = 200
 		self.speed = 200
 		self.speed_factor = 2
 
+		self.initial_animation_speed = 1
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
 		player.animator.set_animation('DOWN')
@@ -72,12 +74,12 @@ class PlayerStateWalkRunState(State):
 
 	def set_all_speeds(self, player):
 		if player.input_manager.is_key_down('LSHIFT'):
-			self.animation_speed *= self.animation_speed_factor
-			self.speed *= self.speed_factor
+			self.animation_speed = self.initial_animation_speed * self.animation_speed_factor
+			self.speed = self.initial_speed * self.speed_factor
 			player.animator.current_animation.set_speed(self.animation_speed)
 		elif player.input_manager.is_key_up('LSHIFT'):
-			self.animation_speed /= self.animation_speed_factor
-			self.speed /= self.speed_factor
+			self.animation_speed = self.initial_animation_speed
+			self.speed = self.initial_speed
 			player.animator.current_animation.set_speed(self.animation_speed)
 
 	def set_animations(self, player):
