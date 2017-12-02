@@ -3,6 +3,7 @@ from data_manager import TileInfos
 from vector import Vector
 from transform import Transform
 from collider import BoxCollider
+from monobehaviour import MonoBehaviour
 
 # ===================================================
 # MAPMANAGER
@@ -28,9 +29,10 @@ class TileMap(object):
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)
 
-class MapManager(object):
+class MapManager(MonoBehaviour):
 	def __init__(self, data_manager):
 		self.map = None
+		MonoBehaviour.__init__(self,0)
 		self.width = 0
 		self.height = 0
 		self.data_manager = data_manager
@@ -45,6 +47,9 @@ class MapManager(object):
 		self.data_manager.load_tile('CLAY', 'CLAY.jpg', self.infos)
 		self.data_manager.load_tile('STONE', 'STONE.jpg', self.infos)
 		self.data_manager.load_tile('WOOD', 'WOOD.jpg', self.infos)
+
+	def start(self):
+         pass
 
 	def load(self, path = None):
 		self.map = []
@@ -68,7 +73,13 @@ class MapManager(object):
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
 				self.map[y][x] = TileMap(key, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-
+    	
+	def update(self,dt):
+         pass
+     
+	def fixed_update(self,fdt):
+         pass
+     
 	def save(self, path):
 		if self.map is None:
 			return
@@ -96,12 +107,14 @@ class MapManager(object):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw_debug(screen)
 
+	
 	def z_buff(self, z_index, z_buffer):
 		if self.map is None:
 			return
 		for y in range(len(self.map)):
 			for x in range(len(self.map[0])):
 				self.map[y][x].z_buff(z_index, z_buffer)
+	
 
 # ===================================================
 # EXAMPLE: Input Manager test with key actions
