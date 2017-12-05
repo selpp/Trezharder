@@ -20,7 +20,7 @@ class Collider:
         
         
     def get_tag(self):
-        return self.parent_transform.get_tag()
+        return self.parent_transform.tag
     
     def on_collision(self):
         self.handler()
