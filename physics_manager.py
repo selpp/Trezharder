@@ -34,8 +34,8 @@ class PhysicsManager(object):
                         if collider.is_trigger_activate() or this_collider.is_trigger_activate():
                                 self.add_trigger(this_collider,collider)
                         else:
-                            if collider.get_transform().tag in self.non_collide_tag:
-                                if this_collider.get_transform().tag in self.non_collide_tag[collider.get_transform().tag]:
+                            if collider.get_tag() in self.non_collide_tag:
+                                if this_collider.get_tag() in self.non_collide_tag[collider.get_tag()]:
                                     continue
                             rb.cancel_movement(collider)
                             
