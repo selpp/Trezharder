@@ -8,7 +8,15 @@ class DataManager(object):
 	def __init__(self):
 		self.sprite_sheets = {}
 		self.tiles = {}
-
+    
+	instance = None
+	@staticmethod
+	def get_instance():
+		if DataManager.instance is None:
+			DataManager.instance = DataManager()
+		return DataManager.instance
+         
+    
 	def load_sprite_sheet(self, id, sprite_sheet_path, infos):
 		if id in self.sprite_sheets:
 			return
