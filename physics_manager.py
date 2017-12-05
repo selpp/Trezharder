@@ -7,6 +7,7 @@ class PhysicsManager(object):
         self.colliders = []
         self.moved_rigidbody = Queue()
         self.trigger_collision = []
+        self.non_collide_tag = {'player' : ['player']}
         
     instance = None
         
@@ -31,10 +32,13 @@ class PhysicsManager(object):
                 for collider in self.colliders:
                     if collider != this_collider and this_collider.try_collision(collider):
                         if collider.is_trigger_activate() or this_collider.is_trigger_activate():
-                            self.add_trigger(this_collider,collider)
+                                self.add_trigger(this_collider,collider)
                         else:
+                            if collider.get_transform().tag in self.non_collide_tag:
+                                if this_collider.get_transform().tag in self.non_collide_tag[collider.get_transform().tag]:
+                                    continue
                             rb.cancel_movement(collider)
-                        
+                            
         self.trigger_update()
                         
     def trigger_update(self):

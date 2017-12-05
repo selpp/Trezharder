@@ -159,7 +159,7 @@ class Player(MonoBehaviour):
 		self.state_machine = PlayerFSM()
 
 		# ================= Transform =========================
-		self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
+		self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100),tag='player')
 		self.velocity = Vector(0.0, 0.0)        
 
 		# ================= Collider ==========================
