@@ -54,9 +54,6 @@ class Transform:
     def get_scale(self):
         self.update_global_state()
         return self.scale
-        
-    def get_tag(self):
-        return self.tag
     
     def __str__(self):
         self.update_global_state()
