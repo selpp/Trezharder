@@ -89,9 +89,9 @@ class BotStateWalkRunState(State):
 			bot.animator.set_animation('DOWN')
 
 	def update(self, dt, bot): 
-		if bot.action_vector[3] > 0.5:
+		if bot.action_vector[3] == 1:
 			self.explode = True
-			does_exit = True
+			self.does_exit = True
 		else: 
 			self.get_direction(bot)
 			self.set_all_speeds(bot)
@@ -133,7 +133,7 @@ class BotStateIdle(State):
  			bot.animator.set_animation('IDLE_RIGHT')
 
 	def update(self, dt, bot):
-		if bot.action_vector[3] > 0.5:
+		if bot.action_vector[3] == 1:
 			self.explode = True
 			does_exit = True
 		else: 
@@ -321,7 +321,7 @@ if __name__ == '__main__':
         if bot_timer > 1:
 			bot_timer = 0
 			# v_x, v_y, shift, fire1
-			bot_action = [round(randint(-1, 1)), round(randint(-1, 1)), randint(0, 1), randint(0, 1)]
+			bot_action = [round(randint(-1, 1)), round(randint(-1, 1)), randint(0, 1), randint(0, 1)]           
 			bot.action_vector = bot_action
 
         # ===== FixedUpdate =====
