@@ -9,47 +9,18 @@ from fsm import State, FSM
 from transform import Transform
 from vector import Vector
 from collider import BoxCollider
-from player import Player
-
-# ===================================================
-# BOTFSM
-
-class BotFSM(FSM):
-    def __init__(self):
-        FSM.__init__(self)
-
-    def update(self, dt, bot):
-        if self.state.does_exit:
-            self.state = self.state.exit(bot)
-        else:
-            self.state.update(dt, bot)
-
-    def fixed_update(self, fixed_dt, bot):
-        if self.state.does_exit:
-            return
-        else:
-            self.state.fixed_update(fixed_dt, bot)
+from player import Player, PlayerStateIdle, PlayerStateWalkRunState
 
 # ===================================================
 # BOTSTATEWALKRUN
 
-class BotStateWalkRunState(State):
+class BotStateWalkRunState(PlayerStateWalkRunState):
     def __init__(self, bot):
-        self.does_exit = False
-        self.timer = 0
+        PlayerStateWalkRunState.__init__(self, bot)
         self.explode = False
-        self.enter(bot)
 
     def enter(self, bot):
-        self.initial_speed = 200
-        self.speed = 200
-        self.speed_factor = 2
-
-        self.initial_animation_speed = 1
-        self.animation_speed = 1
-        self.animation_speed_factor = 1.5
-        bot.animator.set_animation('DOWN')
-
+        PlayerStateWalkRunState.enter(self, bot)
         self.shift = False
     
     def get_direction(self, bot):
@@ -73,32 +44,12 @@ class BotStateWalkRunState(State):
             self.speed = self.initial_speed
             bot.animator.current_animation.set_speed(self.animation_speed)
 
-    def set_animations(self, bot):
-        if bot.velocity.x < 0 and (bot.velocity.y < 0 or bot.velocity.y > 0):
-            bot.animator.set_animation('LEFT')
-        elif bot.velocity.x > 0 and (bot.velocity.y < 0 or bot.velocity.y > 0):
-            bot.animator.set_animation('RIGHT')
-        elif bot.velocity.x < 0:
-            bot.animator.set_animation('LEFT')
-        elif bot.velocity.x > 0:
-            bot.animator.set_animation('RIGHT')
-        elif bot.velocity.y < 0:
-            bot.animator.set_animation('UP')
-        elif bot.velocity.y > 0:
-            bot.animator.set_animation('DOWN')
-
     def update(self, dt, bot): 
         if bot.action_vector[3] == 1:
             self.explode = True
             self.does_exit = True
         else: 
-            self.get_direction(bot)
-            self.set_all_speeds(bot)
-            self.set_animations(bot)
-
-    def fixed_update(self, fixed_dt, bot):
-        bot.rigidbody.set_velocity(bot.velocity * self.speed)
-        bot.rigidbody.fixed_update(fixed_dt)
+            PlayerStateWalkRunState.update(self, dt, bot)
 
     def exit(self, bot):
         if self.explode:
@@ -111,25 +62,10 @@ class BotStateWalkRunState(State):
 # ===================================================
 # BOTSTATEIDLE
 
-class BotStateIdle(State):
+class BotStateIdle(PlayerStateIdle):
     def __init__(self, bot):
-        self.does_exit = False
-        self.timer = 0
-        self.enter(bot)
+        PlayerStateIdle.__init__(self, bot)
         self.explode = False
-
-    def enter(self, bot):
-        current_animation_id = bot.animator.current_animation_id
-        if current_animation_id is None:
-            bot.animator.set_animation('IDLE_DOWN')
-        elif current_animation_id == 'UP':
-            bot.animator.set_animation('IDLE_UP')
-        elif current_animation_id == 'DOWN':
-            bot.animator.set_animation('IDLE_DOWN')
-        elif current_animation_id == 'LEFT':
-            bot.animator.set_animation('IDLE_LEFT')
-        elif current_animation_id == 'RIGHT':
-            bot.animator.set_animation('IDLE_RIGHT')
 
     def update(self, dt, bot):
         if bot.action_vector[3] == 1:
@@ -139,9 +75,6 @@ class BotStateIdle(State):
             x, y = bot.action_vector[0], bot.action_vector[1]
             if abs(x) > 0.01 or abs(y) > 0.01:
                 self.does_exit = True
-
-    def fixed_update(self, fixed_dt, bot):
-        pass
 
     def exit(self, bot):
         if self.explode:
@@ -157,7 +90,6 @@ class BotStateIdle(State):
 class  BotStateExplode(State):
     def __init__(self, bot):
         self.does_exit = False
-        self.timer = 0
         self.enter(bot)
 
     def enter(self, bot):
@@ -190,7 +122,6 @@ class Bot(Player):
         Player.start(self)
 
         # ================= State Machine =========================
-        self.state_machine = BotFSM()
         self.state_machine.state = BotStateIdle(self)
         
         self.explode = False
