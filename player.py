@@ -103,7 +103,7 @@ class PlayerStateWalkRunState(State):
 
 	def fixed_update(self, fixed_dt, player):
 		player.rigidbody.set_velocity(player.velocity * self.speed)
-		player.rigidbody.update(fixed_dt)
+		player.rigidbody.fixed_update(fixed_dt)
 
 	def exit(self, player):
 		return PlayerStateIdle(player)
@@ -164,6 +164,7 @@ class Player(MonoBehaviour):
 		#self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
 		self.transform.get_scale().x = 100
 		self.transform.get_scale().y = 100
+		self.transform.tag = 'player'
 		self.velocity = Vector(0.0, 0.0)      
 
 		# ================= Collider ==========================
