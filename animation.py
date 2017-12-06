@@ -66,8 +66,12 @@ class Animator():
 			return
 
 		if self.anim_timer > self.current_animation.rate:
-			self.anim_timer = 0
-			self.current_sprite = self.current_animation.next_frame()
+			iterations = int(self.anim_timer // self.current_animation.rate)
+			rest = (self.anim_timer / self.current_animation.rate) - iterations
+
+			self.anim_timer = rest
+			for i in range(iterations):
+				self.current_sprite = self.current_animation.next_frame()
 
 	def __str__(self):
 		msg = 'Animator:\n  Animations: '
