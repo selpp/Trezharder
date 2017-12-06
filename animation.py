@@ -26,6 +26,10 @@ class Animation(object):
 		self.speed = speed
 		self.rate = (1.0 * self.duration / self.sprite_number) * (1 / self.speed)
 
+	def get_last_frame(self):
+         row, col = self.sprite_coords[-1]
+         return self.sprite_sheet.get_sprite(row, col)
+
 # ===================================================
 # ANIMATOR
 
@@ -63,6 +67,7 @@ class Animator():
 			return 
 		if self.current_animation.loop == False and self.timer > self.current_animation.duration:
 			self.current_animation_finished = True
+			self.current_sprite = self.current_animation.get_last_frame()   
 			return
 
 		if self.anim_timer > self.current_animation.rate:
