@@ -77,8 +77,8 @@ class HumanPlayerStateIdle(PlayerStateIdle):
 # HUMANPLAYER
 
 class HumanPlayer(Player):
-    def __init__(self):
-        Player.__init__(self)
+    def __init__(self,ennemy_name):
+        Player.__init__(self,ennemy_name)
 
     def start(self):
         Player.start(self)

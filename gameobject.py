@@ -3,8 +3,9 @@ from vector import Vector
 from transform import Transform
 
 class Gameobject(object):
-    def __init__(self,rigidbody=None,monobehaviours=[],tag=''):
+    def __init__(self,name='',rigidbody=None,monobehaviours=[],tag=''):
         self.is_active = True
+        self.name = name
         self.transform = Transform(Vector(0,0),0.0,Vector(1.0,1.0),tag=tag)
         self.rigidbody = rigidbody
         self.monobehaviours = []

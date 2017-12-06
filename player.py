@@ -9,7 +9,7 @@ from fsm import State, FSM
 from transform import Transform
 from vector import Vector
 from collider import BoxCollider
-
+from game_engine import GameEngineTools
 # ===================================================
 # HUMANPLAYERFSM
 
@@ -73,8 +73,8 @@ class PlayerStateWalkRunState(State):
         self.set_animations(player)
 
     def fixed_update(self, fixed_dt, player):
-        player.rigidbody.set_velocity(player.velocity * self.speed)
-        player.rigidbody.fixed_update(fixed_dt)
+        player.gameobject.rigidbody.set_velocity(player.velocity * self.speed)
+        player.gameobject.rigidbody.fixed_update(fixed_dt)
 
     def exit(self, player):
         pass
@@ -92,7 +92,7 @@ class PlayerStateIdle(State):
 
     def enter(self, player):
         player.velocity.set(Vector(0.0, 0.0))
-        player.rigidbody.set_velocity(player.velocity)
+        player.gameobject.rigidbody.set_velocity(player.velocity)
 
         current_animation_id = player.animator.current_animation_id
         if current_animation_id is None:
@@ -110,7 +110,7 @@ class PlayerStateIdle(State):
         pass
 
     def fixed_update(self, fixed_dt, player):
-        player.rigidbody.fixed_update(fixed_dt)
+        player.gameobject.rigidbody.fixed_update(fixed_dt)
 
     def exit(self, player):
         pass
@@ -122,13 +122,15 @@ class PlayerStateIdle(State):
 # PLAYER
 
 class Player(MonoBehaviour):
-    def __init__(self):
+    def __init__(self,ennemy_name):
         MonoBehaviour.__init__(self,1)
+        self.ennemy_name = ennemy_name
 
     def start(self):
     	# ================= State Machine =========================
 		self.state_machine = PlayerFSM()
-
+		self.ennemy = GameEngineTools.find(self.ennemy_name)
+  
 		# ================= Transform =========================
 		#self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
 		self.transform.get_scale().x = 100
@@ -137,8 +139,7 @@ class Player(MonoBehaviour):
 		self.velocity = Vector(0.0, 0.0)      
 
 		# ================= Collider ==========================
-		self.collider = BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3))
-		self.rigidbody = Rigidbody(self.transform,self.collider)
+		self.gameobject.rigidbody.set_collider(BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3)))
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -148,7 +149,7 @@ class Player(MonoBehaviour):
   		data_manager = DataManager.get_instance()
 		data_manager.load_sprite_sheet('TRUMP', 'TEST1.png', infos)
 		spriteSheet = data_manager.get_sprite_sheet('TRUMP')
-		duration = 0.2		
+		duration = 0.6		
 		a_down = Animation(spriteSheet, [(i, 0) for i in range(6)], duration, 1, loop = True)
 		a_right = Animation(spriteSheet, [(i, 1) for i in range(6)], duration, 1, loop = True)
 		a_up = Animation(spriteSheet, [(i, 2) for i in range(6)], duration, 1, loop = True)
@@ -172,7 +173,7 @@ class Player(MonoBehaviour):
 		self.state_machine.update(dt, self)
 
     def fixed_update(self, fixed_dt):
-    	self.state_machine.fixed_update(fixed_dt, self)
+		self.state_machine.fixed_update(fixed_dt, self)
 
     def draw(self, screen):
         scale = self.transform.get_scale() / 2.0

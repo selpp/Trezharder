@@ -5,8 +5,6 @@ from physics_manager import PhysicsManager
 from input_manager import InputManager
 from z_buffer import ZBuffer
 from map_manager import MapManager
-from human_player import HumanPlayer
-from bot import Bot
 from random import randint
 from gameobject import Gameobject
 from rigidbody import Rigidbody
@@ -40,7 +38,7 @@ class GameEngine:
         
         font.init()
         self.fps_font = font.SysFont("monospace", 20)
-        self.time_scale = 5.0
+        self.time_scale = 1.0
         
     def init_graphics(self):
         self.data_manager = DataManager.get_instance()
@@ -78,10 +76,12 @@ class GameEngine:
         for gameobject in self.gameobjects:
             gameobject.fixed_update(self.fixed_rate)
             
+        for i in range(len(self.waiting_gameobjects)):
+            self.gameobjects.append(self.waiting_gameobjects[i])
+            
         while len(self.waiting_gameobjects) > 0:
             new_gameobject = self.waiting_gameobjects.pop()
             new_gameobject.start()
-            self.gameobjects.append(new_gameobject)
             
         self.pm.update_collision()
     
@@ -117,28 +117,18 @@ class GameEngine:
             self.show_debug()
             display.flip()
             
-ge = GameEngine()
-player = Gameobject(Rigidbody(),tag = 'player')
-player.add_mono([Player()])
-player.transform.get_position().x = 6 * 100.0 + 50.0
-player.transform.get_position().y = 4 * 100.0 + 50.0
-'''
-player2 = Player()
-player2.transform.get_position().x = 3 * 100.0 + 50.0
-player2.transform.get_position().y = 2 * 100.0 + 50.0
-
-bots = [Bot() for i in range(1)]
-for i,bot in enumerate(bots):
-    bot.transform.get_position().x = 3 * 100.0 + 50.0 + 3.0 * i
-    bot.transform.get_position().y = 2 * 100.0 + 50.0 + 3.0 * i
-    bot.action_vector = [1, 0, 1, 0]
-
-map_manager = MapManager(DataManager.get_instance())
-map_manager.load(path = 'MAP0.map')
-'''
-ge.add_object(player)
-#ge.add_object(player2)
-#for bot in bots:
-#    ge.add_object(bot)
-#ge.add_object(map_manager)
-ge.loop()
+class GameEngineTools(object):
+    def __init__(self,ge):
+        self.ge = ge
+        GameEngineTools.instance = self
+        
+    instance = None
+        
+    @staticmethod
+    def find(name):
+        ge_tools = GameEngineTools.instance
+        for gameobject in ge_tools.ge.gameobjects:
+            if gameobject.name == name:
+                return gameobject
+        return None
+        

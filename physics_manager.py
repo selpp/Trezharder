@@ -40,7 +40,12 @@ class PhysicsManager(object):
                             rb.cancel_movement(collider)
                             
         self.trigger_update()
-                        
+        self.call_on_trigger()
+        
+    def call_on_trigger(self):
+        for collision in self.trigger_collision:
+            pass
+        
     def trigger_update(self):
         for current_collision in self.trigger_collision:
             if not current_collision[0].try_collision(current_collision[1]):

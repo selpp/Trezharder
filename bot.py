@@ -70,7 +70,7 @@ class BotStateIdle(PlayerStateIdle):
     def update(self, dt, bot):
         if bot.action_vector[3] == 1:
             self.explode = True
-            does_exit = True
+            self.does_exit = True
         else: 
             x, y = bot.action_vector[0], bot.action_vector[1]
             if abs(x) > 0.01 or abs(y) > 0.01:
@@ -114,9 +114,9 @@ class  BotStateExplode(State):
 # BOT
 
 class Bot(Player):
-    def __init__(self):
-        self.action_vector = []
-        Player.__init__(self)
+    def __init__(self,ennemy_name,action_vector_size):
+        self.action_vector = [0 for i in range(action_vector_size)]
+        Player.__init__(self,ennemy_name)
 
     def start(self):
         Player.start(self)
@@ -143,6 +143,8 @@ class Bot(Player):
 
     def fixed_update(self, fixed_dt):
         Player.fixed_update(self, fixed_dt)
+        if (self.ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
+		    self.action_vector[-1] = 1
 
     def draw(self, screen):
         Player.draw(self, screen)
