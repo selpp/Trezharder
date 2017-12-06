@@ -4,15 +4,16 @@ from vector import Vector
 from monobehaviour import MonoBehaviour
 
 class Rigidbody(MonoBehaviour):
-    def __init__(self,transform,collider,triggers=[]):
-        self.transform = transform
-        self.collider = collider
-        self.triggers = triggers
+    def __init__(self):
+        self.transform = None
+        self.gameobject = None
+        self.collider = None
+        self.triggers = []
         self.force = Vector(0.0,0.0)
         self.velocity = Vector(0.0,0.0)
         self.acceleration = Vector(0.0,0.0)
         self.last_movement = Vector(0.0,0.0)
-        
+
     def start(self):
         pass
         
@@ -25,12 +26,20 @@ class Rigidbody(MonoBehaviour):
     def update(self,delta_time):
         pass
         
+    def add_triggers(self,triggers):
+        for trigger in self.triggers:
+            self.triggers.append(trigger)
+            
+    def set_collider(self,collider):
+        self.collider = collider
+        
     def fixed_update(self,delta_time):
         movement = self.velocity * delta_time
         if movement.magnitude() > 0.0001:
             self.transform.move(movement)
             self.last_movement = movement
-            PhysicsManager.get_instance().add_moved_rigidbody(self)
+            if self.collider is not None:
+                PhysicsManager.get_instance().add_moved_rigidbody(self)
                 
         '''
         last_acceleration = self.acceleration
