@@ -8,7 +8,9 @@ from map_manager import MapManager
 from human_player import HumanPlayer
 from bot import Bot
 from random import randint
-
+from gameobject import Gameobject
+from rigidbody import Rigidbody
+from collider import BoxCollider , CircleCollider
 
 class GameEngine:
     def __init__(self):
@@ -45,8 +47,8 @@ class GameEngine:
         self.z_buffer = ZBuffer()
         
     def init_scene(self):
-        self.monobehaviours = []
-        self.waiting_mono = []
+        self.gameobjects = []
+        self.waiting_gameobjects = []
         
     def show_debug(self):
         fps_label = self.fps_font.render('CLOCK: ' + str(clock()), 1, (0, 255, 0))
@@ -66,27 +68,27 @@ class GameEngine:
         self.pm = PhysicsManager.get_instance()
     
     def add_object(self,obj):
-        self.waiting_mono.append(obj)
+        self.waiting_gameobjects.append(obj)
         
     def fixed_update(self):
         self.fixed_timer -= self.fixed_rate / self.time_scale
         #self.fixed_dt = clock() - self.current_fixed_time
         #self.current_fixed_time += self.fixed_dt
         
-        for mono in self.monobehaviours:
-            mono.fixed_update(self.fixed_rate)
+        for gameobject in self.gameobjects:
+            gameobject.fixed_update(self.fixed_rate)
             
-        while len(self.waiting_mono) > 0:
-            new_mono = self.waiting_mono.pop()
-            new_mono.start()
-            self.monobehaviours.append(new_mono)
+        while len(self.waiting_gameobjects) > 0:
+            new_gameobject = self.waiting_gameobjects.pop()
+            new_gameobject.start()
+            self.gameobjects.append(new_gameobject)
             
         self.pm.update_collision()
     
     def update(self,dt):
-        for mono in self.monobehaviours:
-            mono.update(dt)
-            mono.z_buff(mono.z_index,self.z_buffer)
+        for gameobject in self.gameobjects:
+            gameobject.update(dt)
+            gameobject.z_buff(self.z_buffer)
         
     def loop(self):
         while True:
@@ -94,7 +96,6 @@ class GameEngine:
         
             self.screen.fill((0,0,255))
             self.z_buffer.reset()
-        
             dt = (clock() - self.current_time)
             self.current_time += dt
             
@@ -111,17 +112,18 @@ class GameEngine:
                 self.fps_timer = 0.0
                 
             self.update(dt)
-                
+            
             self.z_buffer.draw(self.screen)
             self.show_debug()
             display.flip()
             
 ge = GameEngine()
-player = HumanPlayer()
+player = Gameobject(Rigidbody(),tag = 'player')
+player.add_mono([Player()])
 player.transform.get_position().x = 6 * 100.0 + 50.0
 player.transform.get_position().y = 4 * 100.0 + 50.0
-
-player2 = HumanPlayer()
+'''
+player2 = Player()
 player2.transform.get_position().x = 3 * 100.0 + 50.0
 player2.transform.get_position().y = 2 * 100.0 + 50.0
 
@@ -133,10 +135,10 @@ for i,bot in enumerate(bots):
 
 map_manager = MapManager(DataManager.get_instance())
 map_manager.load(path = 'MAP0.map')
-
+'''
 ge.add_object(player)
-ge.add_object(player2)
-for bot in bots:
-    ge.add_object(bot)
-ge.add_object(map_manager)
+#ge.add_object(player2)
+#for bot in bots:
+#    ge.add_object(bot)
+#ge.add_object(map_manager)
 ge.loop()

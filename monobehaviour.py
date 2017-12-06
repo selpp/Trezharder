@@ -10,7 +10,10 @@ class MonoBehaviour(object):
      
 	def __init__(self,z_index=0):
          self.z_index = z_index
-         self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(1, 1))
+         
+	def bind_gameobject(self,gameobject):
+         self.gameobject = gameobject
+         self.transform = gameobject.transform
          
 	@abstractmethod
 	def start(self):
