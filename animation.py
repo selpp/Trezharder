@@ -66,8 +66,12 @@ class Animator():
 			return
 
 		if self.anim_timer > self.current_animation.rate:
-			self.anim_timer = 0
-			self.current_sprite = self.current_animation.next_frame()
+			iterations = int(self.anim_timer // self.current_animation.rate)
+			rest = (self.anim_timer / self.current_animation.rate) - iterations
+
+			self.anim_timer = rest
+			for i in range(iterations):
+				self.current_sprite = self.current_animation.next_frame()
 
 	def __str__(self):
 		msg = 'Animator:\n  Animations: '
@@ -82,75 +86,3 @@ class Animator():
 		msg += '\n  anim_timer: ' + str(self.anim_timer)
 		msg += '\n  anim_finished: ' + str(self.current_animation_finished)
 		return msg
-
-# ===================================================
-# EXAMPLE: Animation system in action
-
-if __name__ == '__main__':
-	from pygame import display, event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
-	from time import clock
-	from data_manager import DataManager, SpriteSheetInfos
-
-	data = DataManager()
-
-	infos = SpriteSheetInfos(6, 4, (600/6, 400/4))
-	data.load_sprite_sheet('TRUMP', 'TEST1.png', infos)
-	spriteSheet = data.get_sprite_sheet('TRUMP')
-
-	duration = 0.2
-	speed = 1
-	a_down = Animation(spriteSheet, [(i, 0) for i in range(6)], duration, speed, loop = True)
-	a_right = Animation(spriteSheet, [(i, 1) for i in range(6)], duration, speed, loop = True)
-	a_up = Animation(spriteSheet, [(i, 2) for i in range(6)], duration, speed, loop = True)
-	a_left = Animation(spriteSheet, [(i, 3) for i in range(6)], duration, speed, loop = True)
-
-	animator = Animator()
-	animator.add_animation('DOWN', a_down)
-	animator.add_animation('RIGHT', a_right)
-	animator.add_animation('UP', a_up)
-	animator.add_animation('LEFT', a_left)
-
-	width = 800
-	height = 600
-	BLACK = (0, 0, 0)
-	screen = display.set_mode((width, height))
-	screen.fill(BLACK)
-
-	current_time = clock()
-	dt = 0
-
-	animator.set_animation('DOWN')
-	print animator.state()
-
-	while True:
-		events = event.get()
-		for e in events:
-			if e.type == KEYDOWN:
-				if e.key == K_z:
-					animator.set_animation('UP')
-					animator.current_animation.set_speed(speed)
-				elif e.key == K_s:
-					animator.set_animation('DOWN')
-					animator.current_animation.set_speed(speed)
-				elif e.key == K_q:
-					animator.set_animation('LEFT')
-					animator.current_animation.set_speed(speed)
-				elif e.key == K_d:
-					animator.set_animation('RIGHT')
-					animator.current_animation.set_speed(speed)
-				elif e.key == K_LSHIFT:
-					speed = 1.5
-					animator.current_animation.set_speed(speed)
-			if e.type == KEYUP:
-				if e.key == K_LSHIFT:
-					speed = 1
-					animator.current_animation.set_speed(speed)
-
-		screen.fill(BLACK)
-		dt = clock() - current_time
-		current_time += dt
-
-		animator.update(dt)
-		screen.blit(animator.current_sprite, (0, 0))
-
-		display.flip()
