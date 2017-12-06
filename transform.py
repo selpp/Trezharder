@@ -21,6 +21,7 @@ class Transform:
         self.got_updated = False
         self.update_global_state()
         self.tag = tag
+        self.gameobject = None
         debug('WARNING : TRANSFORM GLOBAL STATE HAVEN\'T BEEN DEVELOP YET #NOFEATURE !!!',3)
         debug('PARENT SHOULD ALWAYS BE NONE',3)
         
