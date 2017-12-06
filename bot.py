@@ -99,7 +99,7 @@ class BotStateWalkRunState(State):
 
 	def fixed_update(self, fixed_dt, bot):
 		bot.rigidbody.set_velocity(bot.velocity * self.speed)
-		bot.rigidbody.update(fixed_dt)
+		bot.rigidbody.fixed_update(fixed_dt)
 
 	def exit(self, bot):
 		if self.explode:
@@ -183,16 +183,19 @@ class  BotStateExplode(State):
 # BOT
 
 class Bot(MonoBehaviour):
-    def __init__(self, data_manager):
-        self.start(data_manager)
+    def __init__(self):
+        self.action_vector = []
+        MonoBehaviour.__init__(self,1)
 
-    def start(self, data_manager):
+    def start(self):
+		self.transform.get_scale().x = 100
+		self.transform.get_scale().y = 100
+		self.transform.tag = 'player'
+        
 		self.state_machine = BotFSM()
-		self.action_vector = [0, 0, 0]
 		self.explode = False
 
 		# ================= Transform =========================
-		self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
 		self.velocity = Vector(0.0, 0.0)
 
 		# ================= Collider ==========================
@@ -204,6 +207,7 @@ class Bot(MonoBehaviour):
 
 		scale = self.transform.get_scale()
 		infos = SpriteSheetInfos(6, 4, (scale.x, scale.y))
+		data_manager = DataManager.get_instance()
 		data_manager.load_sprite_sheet('TRUMP', 'TEST1.png', infos)
 		spriteSheet = data_manager.get_sprite_sheet('TRUMP')
 		duration = 0.2
