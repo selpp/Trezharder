@@ -27,11 +27,15 @@ class Transform:
     def update_global_state(self):
         if self.got_updated:
             return
-        if self.parent is not None:
-            self.parent.update_local_state()
+        
         self.position = self.local_position
         self.euler_angle = self.local_euler_angle
         self.scale = self.local_scale
+        
+        if self.parent is not None:
+            self.parent.update_local_state()
+            self.position += self.parent.position
+        
         self.got_updated = True
     
     def move(self,movement):

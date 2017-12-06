@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from physics_manager import PhysicsManager
 from vector import Vector
+from monobehaviour import MonoBehaviour
 
-class Rigidbody:
+class Rigidbody(MonoBehaviour):
     def __init__(self,transform,collider,triggers=[]):
         self.transform = transform
         self.collider = collider
@@ -12,6 +13,9 @@ class Rigidbody:
         self.acceleration = Vector(0.0,0.0)
         self.last_movement = Vector(0.0,0.0)
         
+    def start(self):
+        pass
+        
     def add_force(self,force):
         self.force += force
         
@@ -19,6 +23,9 @@ class Rigidbody:
         self.velocity = new_velocity
         
     def update(self,delta_time):
+        pass
+        
+    def fixed_update(self,delta_time):
         movement = self.velocity * delta_time
         if movement.magnitude() > 0.0001:
             self.transform.move(movement)
@@ -47,3 +54,6 @@ class Rigidbody:
         
     def get_triggers(self):
         return self.triggers
+        
+    def draw(self,screen):
+        pass
