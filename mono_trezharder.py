@@ -10,13 +10,6 @@ class MonoTrezharder(MonoBehaviour):
         MonoBehaviour.__init__(self)
         
     def start(self):
-        '''
-        player = Gameobject('player1',Rigidbody(),tag = 'player')
-        player.add_mono([HumanPlayer('player2')])
-        player.transform.get_position().x = 6 * 100.0 + 50.0
-        player.transform.get_position().y = 4 * 100.0 + 50.0
-        self.player = player
-        '''
         players = [Gameobject('player',Rigidbody(),tag = 'player') for i in range(10)]
         for i in range(3):
             players[i].add_mono([Bot()])

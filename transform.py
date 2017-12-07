@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from vector import Vector
 from logging import debug
 
 class Transform:
@@ -66,10 +65,3 @@ class Transform:
         string += '\nAngle : ' + str(self.euler_angle)
         string += '\nScale : ' + str(self.scale)
         return string
-
-if __name__ == '__main__':
-    t = Transform(Vector(10,5),0.0,Vector(5,3))
-    print(t)
-    t.move(Vector(3,4))
-    t.rotate(-10.0)
-    print(t)

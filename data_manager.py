@@ -1,5 +1,5 @@
 # Data Manager
-from pygame import image, Surface, Rect
+from pygame import image,  Rect
 
 # ===================================================
 # DATAMANAGER
