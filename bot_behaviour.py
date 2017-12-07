@@ -2,24 +2,30 @@ from mono_behaviour import MonoBehaviour
 from model_1 import DeepQModel
 from game_engine import GameEngine
 from bot import Bot
+from reward_calculator import RewardCalculator
+from game_engine import GameEngineTools
 
 class BotBehaviour(MonoBehaviour):
     def start(self):
-        self.r = 0
-        self.model =  DeepQModel(width = 800, height = 600)
+        width, height = GameEngineTools.get_screen_size()
+        self.model =  DeepQModel(width = width, height = height)
         self.bot = self.gameobject.get_mono(Bot)
         self.old_action = [0 for i in range(len(self.bot.action_vector))]
+        self.rc = self.gameobject.get_mono(RewardCalculator)
+        self.prev = None
 
     def update(self, dt):
         pass
 
     def fixed_update(self, fixed_update):
-        prev = GameEngine.previous_frame
-        curr = GameEngine.current_frame
-        self.bot.action_vector = self.model.choose_action(prev)
-        self.model.store_transition(prev, self.old_action, self.r, curr)
+        curr = GameEngineTools.screen_to_array()
+        self.bot.action_vector = self.model.choose_action(curr)
+        if self.prev:
+            self.model.store_transition(prev, self.old_action, self.rc.r, curr)
+            self.model.learn()
+            self.rc.r = 0
         self.old_action = self.bot.action_vector
-        self.model.learn()
+        self.prev = curr
 
     def draw(self, screen):
         pass
