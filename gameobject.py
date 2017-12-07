@@ -3,16 +3,17 @@ from vector import Vector
 from transform import Transform
 
 class Gameobject(object):
-    def __init__(self,name='',rigidbody=None,monobehaviours=[],tag=''):
+    def __init__(self,name='',rigidbody=None,tag=''):
         self.is_active = True
+        self.is_alive = True
         self.name = name
         self.transform = Transform(Vector(0,0),0.0,Vector(1.0,1.0),tag=tag)
         self.rigidbody = rigidbody
         self.monobehaviours = []
+        self.new_monobehaviours = []
         if self.rigidbody is not None:
             self.rigidbody.bind_gameobject(self)
-        #self.transform.gameobject = self
-        self.new_monobehaviours = monobehaviours
+        self.transform.gameobject = self
             
     def set_triggers(self,triggers):
         if self.rigidbody is None:
@@ -25,11 +26,16 @@ class Gameobject(object):
         for mono in monobehaviours:
             mono.bind_gameobject(self)
             self.new_monobehaviours.append(mono)
-            
-    def start(self):
-        for mono in self.monobehaviours:
-            mono.start()
         
+    def get_mono(self,type_mono):
+        for mono in self.monobehaviours:
+            if isinstance(mono,type_mono):
+                return mono
+        return None
+        
+    def pop_mono(self,mono):
+        self.monobehaviours.remove(mono)
+
     def update(self,dt):
         if not self.is_active:
             return
@@ -41,12 +47,14 @@ class Gameobject(object):
             return
         for mono in self.monobehaviours:
             mono.fixed_update(fdt)
+            
         if self.rigidbody is not None:
             self.rigidbody.fixed_update(fdt)
+            
         while len(self.new_monobehaviours) > 0:
             new_mono = self.new_monobehaviours.pop()
-            new_mono.start()
             self.monobehaviours.append(new_mono)
+            new_mono.start()
             
     def set_child(self,gameobject):
         gameobject.transform.parent = self.transform

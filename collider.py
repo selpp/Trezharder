@@ -10,12 +10,13 @@ class Collider:
     __metaclass__ = ABCMeta
     
     @abstractmethod
-    def __init__(self,collision_handler,parent_transform,position,is_trigger = False):
+    def __init__(self,collision_handler,parent_transform,position,gameobject,is_trigger = False):
         self.handler = collision_handler
         self.position = position
         self.parent_transform = parent_transform
         self.is_trigger = is_trigger
         self.is_on_collision = False
+        self.gameobject = gameobject
         PhysicsManager.get_instance().add_collider(self)
         
         

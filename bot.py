@@ -10,7 +10,8 @@ from transform import Transform
 from vector import Vector
 from collider import BoxCollider
 from player import Player, PlayerStateIdle, PlayerStateWalkRunState
-
+from game_engine import GameEngineTools
+import random as rnd
 # ===================================================
 # BOTSTATEWALKRUN
 
@@ -94,9 +95,12 @@ class  BotStateExplode(State):
 
     def enter(self, bot):
         bot.animator.set_animation('EXPLODE')
+        bot.gameobject.rigidbody.set_velocity(Vector(0,0))
 
     def update(self, dt, bot):
         if bot.explode:
+            if bot.animator.current_animation_finished:
+                self.does_exit = True
             return
         if bot.animator.current_animation_finished:
             bot.explode = True
@@ -105,25 +109,44 @@ class  BotStateExplode(State):
         pass
 
     def exit(self, bot):
-        return None
+        return BotDeathState(bot)
 
     def __str__(self):
         return 'Bot State: Explode'
+        
+class  BotDeathState(State):
+    def __init__(self, bot):
+        self.does_exit = False
+        self.enter(bot)
+
+    def enter(self, bot):
+        GameEngineTools.DestroyObject(bot.gameobject)
+        
+    def update(self, dt, bot):
+        pass
+
+    def fixed_update(self, fixed_dt, bot):
+        pass
+
+    def exit(self, bot):
+        return None
+
+    def __str__(self):
+        return 'Bot State: RIP'
 
 # ===================================================
 # BOT
 
 class Bot(Player):
-    def __init__(self,ennemy_name,action_vector_size):
-        self.action_vector = [0 for i in range(action_vector_size)]
-        Player.__init__(self,ennemy_name)
+    def __init__(self):
+        self.action_vector = [0 for i in range(4)]
+        Player.__init__(self)
 
     def start(self):
         Player.start(self)
 
         # ================= State Machine =========================
         self.state_machine.state = BotStateIdle(self)
-        
         self.explode = False
 
         # ================= Animator ==========================
@@ -143,9 +166,17 @@ class Bot(Player):
 
     def fixed_update(self, fixed_dt):
         Player.fixed_update(self, fixed_dt)
-        if (self.ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
-		    self.action_vector[-1] = 1
-
+        for ennemy in self.ennemies:
+            if ennemy is None or ennemy is self.gameobject:
+                continue
+            if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
+        		    self.action_vector[-1] = 1
+        		    bot_sc = ennemy.get_mono(Bot) 
+        		    bot_sc.action_vector[-1] = 1
+        self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),0]
+      
+      
+      
     def draw(self, screen):
         Player.draw(self, screen)
 

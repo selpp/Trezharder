@@ -4,18 +4,18 @@ from vector import Vector
 from transform import Transform
 from collider import BoxCollider
 from monobehaviour import MonoBehaviour
-
+from data_manager import DataManager
 # ===================================================
 # MAPMANAGER
 
 class TileMap(object):
-	def __init__(self, id, position, angle, scale, data_manager, is_collider = False):
+	def __init__(self, id,gameobject, position, angle, scale, data_manager, is_collider = False):
 		self.data_manager = data_manager
 		self.id = id
 		self.transform = Transform(position, angle, scale)
 		self.collider = None
 		if is_collider:
-			self.collider = BoxCollider(None, self.transform, Vector(0.0, 0.0), Vector(1.0, 1.0))
+			self.collider = BoxCollider(None, self.transform, Vector(0.0, 0.0), Vector(1.0, 1.0),gameobject)
 
 	def draw(self, screen):
 		tile = self.data_manager.get_tile(self.id)
@@ -30,12 +30,12 @@ class TileMap(object):
 		z_buffer.insert(z_index, self)
 
 class MapManager(MonoBehaviour):
-	def __init__(self, data_manager):
+	def __init__(self):
 		self.map = None
 		MonoBehaviour.__init__(self,0)
 		self.width = 0
 		self.height = 0
-		self.data_manager = data_manager
+		self.data_manager = DataManager.get_instance()
 
 		self.types = {
 			'CLAY': 0,
@@ -72,7 +72,7 @@ class MapManager(MonoBehaviour):
 				value = self.map[y][x]
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
-				self.map[y][x] = TileMap(key, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
+				self.map[y][x] = TileMap(key,self.gameobject, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
     	
 	def update(self,dt):
          pass

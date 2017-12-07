@@ -122,14 +122,13 @@ class PlayerStateIdle(State):
 # PLAYER
 
 class Player(MonoBehaviour):
-    def __init__(self,ennemy_name):
+    def __init__(self):
         MonoBehaviour.__init__(self,1)
-        self.ennemy_name = ennemy_name
 
     def start(self):
-    	# ================= State Machine =========================
+    	# ================= State Machine =========================  
 		self.state_machine = PlayerFSM()
-		self.ennemy = GameEngineTools.find(self.ennemy_name)
+		self.ennemies = GameEngineTools.find_all('player')
   
 		# ================= Transform =========================
 		#self.transform = Transform(Vector(0.0, 0.0), 0.0, Vector(100, 100))
@@ -139,7 +138,7 @@ class Player(MonoBehaviour):
 		self.velocity = Vector(0.0, 0.0)      
 
 		# ================= Collider ==========================
-		self.gameobject.rigidbody.set_collider(BoxCollider(None, self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3)))
+		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3) , self.gameobject))
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -179,6 +178,10 @@ class Player(MonoBehaviour):
         scale = self.transform.get_scale() / 2.0
         draw_pos = self.transform.get_position() - scale
         screen.blit(self.animator.current_sprite, (draw_pos.x, draw_pos.y))
+        
+    def die(self):
+        print('I died')
+        GameEngineTools.DestroyObject(self.gameobject)
 
     def z_buff(self, z_index, z_buffer):
     	z_buffer.insert(z_index, self)

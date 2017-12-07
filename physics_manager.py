@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Queue import Queue
 
+
 class PhysicsManager(object):
     
     def __init__(self):
@@ -41,6 +42,8 @@ class PhysicsManager(object):
                             
         self.trigger_update()
         self.call_on_trigger()
+        self.clean_box()
+        
         
     def call_on_trigger(self):
         for collision in self.trigger_collision:
@@ -60,3 +63,8 @@ class PhysicsManager(object):
         self.trigger_collision.append([collider1,collider2])
         collider1.set_on_collision(True)
         collider2.set_on_collision(True)
+        
+    def clean_box(self):
+        for collider in self.colliders:
+            if not collider.gameobject.is_alive:
+                self.colliders.remove(collider)

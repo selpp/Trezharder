@@ -23,9 +23,9 @@ class GameEngine:
     def init_screen(self,width=800,height=600):
         self.width = width
         self.height = height
-        BLACK = (0, 0, 0)
+        self.BLACK = (0, 0, 0)
         self.screen = display.set_mode((width, height))
-        self.screen.fill(BLACK)
+        self.screen.fill(self.BLACK)
 
     def init_time(self):
         self.current_time = clock()
@@ -38,7 +38,7 @@ class GameEngine:
         
         font.init()
         self.fps_font = font.SysFont("monospace", 20)
-        self.time_scale = 1.0
+        self.time_scale = 5.0
         
     def init_graphics(self):
         self.data_manager = DataManager.get_instance()
@@ -47,6 +47,7 @@ class GameEngine:
     def init_scene(self):
         self.gameobjects = []
         self.waiting_gameobjects = []
+        self.destruct_list = []
         
     def show_debug(self):
         fps_label = self.fps_font.render('CLOCK: ' + str(clock()), 1, (0, 255, 0))
@@ -75,15 +76,17 @@ class GameEngine:
         
         for gameobject in self.gameobjects:
             gameobject.fixed_update(self.fixed_rate)
-            
-        for i in range(len(self.waiting_gameobjects)):
-            self.gameobjects.append(self.waiting_gameobjects[i])
+          
+        while len(self.destruct_list) > 0:
+            print(self.destruct_list[-1].name)
+            self.gameobjects.remove(self.destruct_list.pop())
             
         while len(self.waiting_gameobjects) > 0:
             new_gameobject = self.waiting_gameobjects.pop()
-            new_gameobject.start()
+            self.gameobjects.append(new_gameobject)
             
         self.pm.update_collision()
+        
     
     def update(self,dt):
         for gameobject in self.gameobjects:
@@ -94,7 +97,6 @@ class GameEngine:
         while True:
             InputManager.get_instance().update(event.get())
         
-            self.screen.fill((0,0,255))
             self.z_buffer.reset()
             dt = (clock() - self.current_time)
             self.current_time += dt
@@ -112,6 +114,7 @@ class GameEngine:
                 self.fps_timer = 0.0
                 
             self.update(dt)
+            self.screen.fill(self.BLACK)
             
             self.z_buffer.draw(self.screen)
             self.show_debug()
@@ -131,4 +134,24 @@ class GameEngineTools(object):
             if gameobject.name == name:
                 return gameobject
         return None
+    
+    @staticmethod
+    def find_all(name):
+        ge_tools = GameEngineTools.instance
+        gameobjects = []
+        for gameobject in ge_tools.ge.gameobjects:
+            if gameobject.name == name:
+                gameobjects.append(gameobject)
+        return gameobjects
+        
+    @staticmethod
+    def instantiate(gameobject):
+        ge_tools = GameEngineTools.instance
+        ge_tools.ge.add_object(gameobject)
+    
+    @staticmethod
+    def DestroyObject(gameobject):
+        ge_tools = GameEngineTools.instance
+        ge_tools.ge.destruct_list.append(gameobject)
+        gameobject.is_alive = False
         
