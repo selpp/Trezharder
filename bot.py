@@ -78,12 +78,9 @@ class  BotStateExplode(State):
         bot.gameobject.rigidbody.set_velocity(Vector(0,0))
 
     def update(self, dt, bot):
-        if bot.explode:
-            if bot.animator.current_animation_finished:
-                self.does_exit = True
-            return
         if bot.animator.current_animation_finished:
-            bot.explode = True
+            self.does_exit = True
+        return
 
     def fixed_update(self, fixed_dt, bot):
         pass
@@ -118,10 +115,13 @@ class  BotDeathState(State):
 # BOT
 
 class Bot(Player):
-    def __init__(self):
+    def __init__(self,is_rnd = True):
         self.action_vector = [0 for i in range(4)]
         self.explode = False
         self.rip = False
+        self.is_rnd = is_rnd
+        if not self.is_rnd:
+            self.action_vector[3] = 1
         Player.__init__(self)
 
     def start(self):
@@ -155,15 +155,12 @@ class Bot(Player):
                 continue
             if self.action_vector[3] and (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
         		    self.explode = True
-        		    self.state_machine.state = BotStateExplode(self)            
-        		    bot_sc = ennemy.get_mono(Bot)
-        		    bot_sc.explode = True            
+        		    self.state_machine.state = BotStateExplode(self) 
         		    self.rip = True
-        if rnd.randint(0,10) == 10:
-            self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),1 if rnd.randint(0,10) > 7 else 0]
-      
-      
-      
+        if self.is_rnd:
+            if rnd.randint(0,10) == 10:
+                self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),1 if rnd.randint(0,10) > 7 else 0]
+    
     def draw(self, screen):
         Player.draw(self, screen)
 
