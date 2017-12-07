@@ -1,4 +1,4 @@
-from mono_behaviour import MonoBehaviour
+from monobehaviour import MonoBehaviour
 from model_1 import DeepQModel
 from game_engine import GameEngine
 from bot import Bot
@@ -20,12 +20,14 @@ class BotBehaviour(MonoBehaviour):
     def fixed_update(self, fixed_update):
         curr = GameEngineTools.screen_to_array()
         self.bot.action_vector = self.model.choose_action(curr)
-        if self.prev:
-            self.model.store_transition(prev, self.old_action, self.rc.r, curr)
+        if self.prev is not None:
+            self.model.store_transition(self.prev, self.old_action, self.rc.r, curr)
             self.model.learn()
-            self.rc.r = 0
         self.old_action = self.bot.action_vector
         self.prev = curr
 
     def draw(self, screen):
+        pass
+    
+    def z_buff(self, z_index, z_buffer):
         pass

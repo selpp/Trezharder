@@ -1,10 +1,12 @@
-from pygame import display, event, font
+from pygame import display, event, font , image
 from time import clock
 from data_manager import DataManager
 from physics_manager import PhysicsManager
 from input_manager import InputManager
 from z_buffer import ZBuffer
 from pygame import image, surfarray
+from PIL import Image
+import numpy as np
 
 class GameEngine:
     def __init__(self):
@@ -125,7 +127,7 @@ class GameEngineTools(object):
     @staticmethod
     def get_screen_size():
         ge_tools = GameEngineTools.instance
-        return ge_tools.width, ge_tools.height
+        return ge_tools.ge.width, ge_tools.ge.height
         
     @staticmethod
     def find(name):
@@ -158,8 +160,8 @@ class GameEngineTools(object):
     @staticmethod
     def screen_to_array():
         ge_tools = GameEngineTools.instance
-        string_image = image.tostring(ge_tools.screen, 'RGB')
-        surf = image.fromstring(string_image, (ge_tools.width, ge_tools.height), 'RGB')
+        string_image = image.tostring(ge_tools.ge.screen, 'RGB')
+        surf = image.fromstring(string_image, (ge_tools.ge.width, ge_tools.ge.height), 'RGB')
         arr = surfarray.array3d(surf)
         return arr
         
