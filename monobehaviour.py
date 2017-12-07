@@ -1,7 +1,5 @@
 # Mono Behaviour
 from abc import ABCMeta, abstractmethod
-from transform import Transform
-from vector import Vector
 # ===================================================
 # MONOBEHAVIOUR
 

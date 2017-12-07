@@ -1,16 +1,6 @@
 # Human Player
-from pygame import event, KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_LSHIFT
-from data_manager import DataManager, SpriteSheetInfos
-from animation import Animation, Animator
-from monobehaviour import MonoBehaviour
 from input_manager import InputManager
-from physics_manager import PhysicsManager
-from rigidbody import Rigidbody
-from z_buffer import ZBuffer
-from fsm import State, FSM
-from transform import Transform
 from vector import Vector
-from collider import BoxCollider
 from player import Player, PlayerStateIdle, PlayerStateWalkRunState
 
 # ===================================================

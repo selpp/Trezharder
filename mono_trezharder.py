@@ -1,12 +1,9 @@
 from monobehaviour import MonoBehaviour
-from human_player import HumanPlayer
 from bot import Bot
 from game_engine import GameEngineTools
 from gameobject import Gameobject
 from rigidbody import Rigidbody
 from map_manager import MapManager
-from data_manager import DataManager
-import copy
 
 class MonoTrezharder(MonoBehaviour):
     def __init__(self):

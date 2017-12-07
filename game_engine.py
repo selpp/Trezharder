@@ -1,14 +1,9 @@
 from pygame import display, event, font
-from time import clock, sleep
+from time import clock
 from data_manager import DataManager
 from physics_manager import PhysicsManager
 from input_manager import InputManager
 from z_buffer import ZBuffer
-from map_manager import MapManager
-from random import randint
-from gameobject import Gameobject
-from rigidbody import Rigidbody
-from collider import BoxCollider , CircleCollider
 
 class GameEngine:
     def __init__(self):
@@ -78,7 +73,6 @@ class GameEngine:
             gameobject.fixed_update(self.fixed_rate)
           
         while len(self.destruct_list) > 0:
-            print(self.destruct_list[-1].name)
             self.gameobjects.remove(self.destruct_list.pop())
             
         while len(self.waiting_gameobjects) > 0:

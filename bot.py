@@ -1,14 +1,8 @@
 # Bot
 from data_manager import DataManager, SpriteSheetInfos
-from animation import Animation, Animator
-from monobehaviour import MonoBehaviour
-from physics_manager import PhysicsManager
-from rigidbody import Rigidbody
-from z_buffer import ZBuffer
-from fsm import State, FSM
-from transform import Transform
+from animation import Animation
+from fsm import State
 from vector import Vector
-from collider import BoxCollider
 from player import Player, PlayerStateIdle, PlayerStateWalkRunState
 from game_engine import GameEngineTools
 import random as rnd
