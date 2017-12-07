@@ -12,7 +12,6 @@ import random as rnd
 class BotStateWalkRunState(PlayerStateWalkRunState):
     def __init__(self, bot):
         PlayerStateWalkRunState.__init__(self, bot)
-        self.explode = False
 
     def enter(self, bot):
         PlayerStateWalkRunState.enter(self, bot)
@@ -40,15 +39,9 @@ class BotStateWalkRunState(PlayerStateWalkRunState):
             bot.animator.current_animation.set_speed(self.animation_speed)
 
     def update(self, dt, bot): 
-        if bot.action_vector[3] == 1:
-            self.explode = True
-            self.does_exit = True
-        else: 
-            PlayerStateWalkRunState.update(self, dt, bot)
+        PlayerStateWalkRunState.update(self, dt, bot)
 
     def exit(self, bot):
-        if self.explode:
-            return BotStateExplode(bot)
         return BotStateIdle(bot)
 
     def __str__(self):
@@ -60,20 +53,13 @@ class BotStateWalkRunState(PlayerStateWalkRunState):
 class BotStateIdle(PlayerStateIdle):
     def __init__(self, bot):
         PlayerStateIdle.__init__(self, bot)
-        self.explode = False
 
     def update(self, dt, bot):
-        if bot.action_vector[3] == 1:
-            self.explode = True
+        x, y = bot.action_vector[0], bot.action_vector[1]
+        if abs(x) > 0.01 or abs(y) > 0.01:
             self.does_exit = True
-        else: 
-            x, y = bot.action_vector[0], bot.action_vector[1]
-            if abs(x) > 0.01 or abs(y) > 0.01:
-                self.does_exit = True
 
     def exit(self, bot):
-        if self.explode:
-            return BotStateExplode(bot)
         return BotStateWalkRunState(bot)
 
     def __str__(self):
@@ -134,6 +120,8 @@ class  BotDeathState(State):
 class Bot(Player):
     def __init__(self):
         self.action_vector = [0 for i in range(4)]
+        self.explode = False
+        self.rip = False
         Player.__init__(self)
 
     def start(self):
@@ -159,15 +147,20 @@ class Bot(Player):
         Player.update(self, dt)
 
     def fixed_update(self, fixed_dt):
+        if self.rip:
+            return
         Player.fixed_update(self, fixed_dt)
         for ennemy in self.ennemies:
-            if ennemy is None or ennemy is self.gameobject:
+            if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
                 continue
-            if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
-        		    self.action_vector[-1] = 1
-        		    bot_sc = ennemy.get_mono(Bot) 
-        		    bot_sc.action_vector[-1] = 1
-        self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),0]
+            if self.action_vector[3] and (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
+        		    self.explode = True
+        		    self.state_machine.state = BotStateExplode(self)            
+        		    bot_sc = ennemy.get_mono(Bot)
+        		    bot_sc.explode = True            
+        		    self.rip = True
+        if rnd.randint(0,10) == 10:
+            self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),1 if rnd.randint(0,10) > 7 else 0]
       
       
       
