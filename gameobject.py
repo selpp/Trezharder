@@ -56,6 +56,10 @@ class Gameobject(object):
             self.monobehaviours.append(new_mono)
             new_mono.start()
             
+    def on_collision(self,collider):
+        for mono in self.monobehaviours:
+            mono.on_collision(collider)
+            
     def set_child(self,gameobject):
         gameobject.transform.parent = self.transform
         

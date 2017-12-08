@@ -81,6 +81,9 @@ class HumanPlayer(Player):
         
     def update(self, dt):
         Player.update(self, dt)
+    
+    def on_collision(self,collider):
+        print('yeah')
 
     def fixed_update(self, fixed_dt):
         Player.fixed_update(self, fixed_dt)
