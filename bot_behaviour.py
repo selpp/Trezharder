@@ -7,7 +7,6 @@ from game_engine import GameEngineTools
 
 class BotBehaviour(MonoBehaviour):
     def start(self):
-        width, height = GameEngineTools.get_screen_size()
         self.model = GameEngineTools.instance.model
         self.bot = self.gameobject.get_mono(Bot)
         self.old_action = [0 for i in range(len(self.bot.action_vector))]

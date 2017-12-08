@@ -1,4 +1,4 @@
-from pygame import display, event, font , image
+from pygame import display, event, font , image, transform
 from time import clock
 from data_manager import DataManager
 from physics_manager import PhysicsManager
@@ -128,7 +128,9 @@ class GameEngineTools(object):
     def __init__(self,ge):
         self.ge = ge
         ge.pause_timers()
-        self.model = DeepQModel(width = ge.width, height = ge.height, output_graph = True)
+        self.deep_width = 400
+        self.deep_height = 300
+        self.model = DeepQModel(width = self.deep_width, height = self.deep_height, output_graph = True)
         ge.restart_timers()
         GameEngineTools.instance = self
         
@@ -184,5 +186,7 @@ class GameEngineTools(object):
     @staticmethod
     def screen_to_array():
         ge_tools = GameEngineTools.instance
-        return surfarray.array3d(ge_tools.ge.screen)
+        surface = ge_tools.ge.screen
+        surface = transform.scale(surface, (ge_tools.deep_width, ge_tools.deep_height))
+        return surfarray.array3d(surface)
         
