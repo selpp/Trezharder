@@ -56,6 +56,7 @@ class Rigidbody(MonoBehaviour):
             self.transform.move(Vector(self.last_movement.x , -self.last_movement.y))
             if self.collider.try_collision(other_collider):
                 self.transform.move(Vector(-self.last_movement.x , 0.0))
+        self.gameobject.on_collision(other_collider)
             
         
     def get_collider(self):

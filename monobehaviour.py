@@ -28,3 +28,6 @@ class MonoBehaviour(object):
 	@abstractmethod
 	def draw():
 		pass
+
+	def on_collision(self,collider):
+	    pass
