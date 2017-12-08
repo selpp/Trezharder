@@ -7,6 +7,7 @@ from z_buffer import ZBuffer
 from pygame import image, surfarray
 from PIL import Image
 import numpy as np
+from model_1 import DeepQModel
 
 class GameEngine:
     def __init__(self):
@@ -116,13 +117,26 @@ class GameEngine:
             self.z_buffer.draw(self.screen)
             self.show_debug()
             display.flip()
+
+    def pause_timers(self):
+        self.dt_pause = clock() - self.current_time
+
+    def restart_timers(self):
+        self.current_time = clock() - self.dt_pause
             
 class GameEngineTools(object):
     def __init__(self,ge):
         self.ge = ge
+        ge.pause_timers()
+        self.model = DeepQModel(width = ge.width, height = ge.height, output_graph = True)
+        ge.restart_timers()
         GameEngineTools.instance = self
         
     instance = None
+
+    @staticmethod
+    def get_model():
+        return GameEngineTools.instance.model
 
     @staticmethod
     def get_screen_size():
@@ -158,10 +172,17 @@ class GameEngineTools(object):
         gameobject.is_alive = False
 
     @staticmethod
+    def pause():
+        ge_tools = GameEngineTools.instance
+        ge_tools.ge.pause_timers()
+
+    @staticmethod
+    def restart():
+        ge_tools = GameEngineTools.instance
+        ge_tools.ge.restart_timers()
+
+    @staticmethod
     def screen_to_array():
         ge_tools = GameEngineTools.instance
-        string_image = image.tostring(ge_tools.ge.screen, 'RGB')
-        surf = image.fromstring(string_image, (ge_tools.ge.width, ge_tools.ge.height), 'RGB')
-        arr = surfarray.array3d(surf)
-        return arr
+        return surfarray.array3d(ge_tools.ge.screen)
         

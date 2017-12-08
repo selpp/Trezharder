@@ -18,7 +18,7 @@ class BotStateWalkRunState(PlayerStateWalkRunState):
         self.shift = False
     
     def get_direction(self, bot):
-        move_x, move_y = bot.action_vector[0], bot.action_vector[1]
+        move_x, move_y = bot.action_vector[0] * 2.0 - 1.0, bot.action_vector[1] * 2.0 - 1.0
 
         if abs(move_x) < 0.01 and abs(move_y) < 0.01:
             self.does_exit = True
@@ -123,6 +123,7 @@ class Bot(Player):
         if not self.is_rnd:
             self.action_vector[3] = 1
         Player.__init__(self)
+        self.color = 0 if is_rnd else 1
 
     def start(self):
         Player.start(self)
@@ -154,12 +155,12 @@ class Bot(Player):
             if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
                 continue
             if self.action_vector[3] and (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
-        		    self.explode = True
-        		    self.state_machine.state = BotStateExplode(self) 
-        		    self.rip = True
+                    self.explode = True
+                    self.state_machine.state = BotStateExplode(self) 
+                    self.rip = True
         if self.is_rnd:
             if rnd.randint(0,10) == 10:
-                self.action_vector = [rnd.randint(-1,1),rnd.randint(-1,1),rnd.randint(0,1),1 if rnd.randint(0,10) > 7 else 0]
+                self.action_vector = [rnd.randint(0,1),rnd.randint(0,1),rnd.randint(0,1), 0]
     
     def draw(self, screen):
         Player.draw(self, screen)

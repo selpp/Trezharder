@@ -8,7 +8,7 @@ from game_engine import GameEngineTools
 class BotBehaviour(MonoBehaviour):
     def start(self):
         width, height = GameEngineTools.get_screen_size()
-        self.model =  DeepQModel(width = width, height = height)
+        self.model = GameEngineTools.instance.model
         self.bot = self.gameobject.get_mono(Bot)
         self.old_action = [0 for i in range(len(self.bot.action_vector))]
         self.rc = self.gameobject.get_mono(RewardCalculator)
@@ -18,6 +18,7 @@ class BotBehaviour(MonoBehaviour):
         pass
 
     def fixed_update(self, fixed_update):
+        GameEngineTools.pause()
         curr = GameEngineTools.screen_to_array()
         self.bot.action_vector = self.model.choose_action(curr)
         if self.prev is not None:
@@ -25,6 +26,8 @@ class BotBehaviour(MonoBehaviour):
             self.model.learn()
         self.old_action = self.bot.action_vector
         self.prev = curr
+        print('Action: ' + str(self.bot.action_vector) + ' ,Reward: ' + str(self.rc.r))
+        GameEngineTools.restart()
 
     def draw(self, screen):
         pass
