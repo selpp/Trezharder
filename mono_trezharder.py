@@ -4,6 +4,8 @@ from game_engine import GameEngineTools
 from gameobject import Gameobject
 from rigidbody import Rigidbody
 from map_manager import MapManager
+from player import Player
+from player_command import *
 
 class MonoTrezharder(MonoBehaviour):
     def __init__(self):
@@ -12,7 +14,7 @@ class MonoTrezharder(MonoBehaviour):
     def start(self):
         players = [Gameobject('player',Rigidbody(),tag = 'player') for i in range(10)]
         for i in range(3):
-            players[i].add_mono([Bot()])
+            players[i].add_mono([Player(RandomPlayerCommand())])
         players[0].transform.get_position().x = 3 * 100.0 + 50.0
         players[0].transform.get_position().y = 4 * 100.0 + 50.0
         players[1].transform.get_position().x = 6 * 100.0 + 50.0
