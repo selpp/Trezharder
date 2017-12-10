@@ -4,7 +4,7 @@ from data_manager import DataManager
 from physics_manager import PhysicsManager
 from input_manager import InputManager
 from z_buffer import ZBuffer
-from pygame import image, surfarray
+from pygame import image, surfarray, Surface
 from PIL import Image
 import numpy as np
 from model_1 import DeepQModel
@@ -25,6 +25,9 @@ class GameEngine:
         self.BLACK = (0, 0, 0)
         self.screen = display.set_mode((width, height))
         self.screen.fill(self.BLACK)
+
+        self.screen_ai = Surface((width, height))
+        self.screen_ai.fill(self.BLACK)
 
     def init_time(self):
         self.current_time = clock()
@@ -113,10 +116,23 @@ class GameEngine:
                 
             self.update(dt)
             self.screen.fill(self.BLACK)
+            self.screen_ai.fill(self.BLACK)
             
+            self.z_buffer.draw_ai(self.screen_ai)
             self.z_buffer.draw(self.screen)
+
             self.show_debug()
+
+            self.draw_screen_ai()
+            
             display.flip()
+
+    def draw_screen_ai(self):
+        if GameEngineTools.get_current_screen_ai() is not None:
+            w, _ = GameEngineTools.get_screen_ai_size()
+            ai_screen = GameEngineTools.get_current_screen_ai()
+            ai_debug = surfarray.make_surface(np.stack([ai_screen, ai_screen, ai_screen], axis = 2))
+            self.screen.blit(ai_debug, (self.width - w, 0))
 
     def pause_timers(self):
         self.dt_pause = clock() - self.current_time
@@ -128,9 +144,10 @@ class GameEngineTools(object):
     def __init__(self,ge):
         self.ge = ge
         ge.pause_timers()
-        self.deep_width = 400
-        self.deep_height = 300
-        self.model = DeepQModel(width = self.deep_width, height = self.deep_height, output_graph = True)
+        self.deep_width = 84
+        self.deep_height = 84
+        self.model = DeepQModel(width = self.deep_width, height = self.deep_height)
+        self.current_screen_ai = None
         ge.restart_timers()
         GameEngineTools.instance = self
         
@@ -144,6 +161,21 @@ class GameEngineTools(object):
     def get_screen_size():
         ge_tools = GameEngineTools.instance
         return ge_tools.ge.width, ge_tools.ge.height
+
+    @staticmethod
+    def get_screen_ai_size():
+        ge_tools = GameEngineTools.instance
+        return ge_tools.deep_width, ge_tools.deep_height
+
+    @staticmethod
+    def get_current_screen_ai():
+        ge_tools = GameEngineTools.instance
+        return ge_tools.current_screen_ai
+
+    @staticmethod
+    def update_current_screen_ai():
+        ge_tools = GameEngineTools.instance
+        ge_tools.current_screen_ai = ge_tools.screen_ai_to_array()
         
     @staticmethod
     def find(name):
@@ -185,8 +217,26 @@ class GameEngineTools(object):
 
     @staticmethod
     def screen_to_array():
+        #from PIL import Image
+        
         ge_tools = GameEngineTools.instance
         surface = ge_tools.ge.screen
-        surface = transform.scale(surface, (ge_tools.deep_width, ge_tools.deep_height))
-        return surfarray.array3d(surface)
+        #surface = transform.scale(surface, (ge_tools.deep_width, ge_tools.deep_height))
+        arr = surfarray.array3d(surface)
+        image = Image.fromarray(arr)
+        image = image.resize((ge_tools.deep_height,ge_tools.deep_width),Image.NEAREST)
+        #img = Image.fromarray(arr)
+        # image.save('Out.jpg')
         
+        return np.array(image)
+
+    @staticmethod
+    def screen_ai_to_array():
+        ge_tools = GameEngineTools.instance
+        surface = ge_tools.ge.screen_ai
+        arr = surfarray.array3d(surface) 
+        image = Image.fromarray(arr)
+        image = image.resize((ge_tools.deep_height,ge_tools.deep_width), Image.NEAREST)
+        image = image.convert('L',(0.2889,0.5870,0.1140,0))
+
+        return np.array(image)

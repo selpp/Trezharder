@@ -6,6 +6,8 @@ from fsm import State, FSM
 from vector import Vector
 from collider import BoxCollider
 from game_engine import GameEngineTools
+import pygame
+from pygame import Rect
 # ===================================================
 # HUMANPLAYERFSM
 
@@ -179,6 +181,12 @@ class Player(MonoBehaviour):
         scale = self.transform.get_scale() / 2.0
         draw_pos = self.transform.get_position() - scale
         screen.blit(self.animator.current_sprite, (draw_pos.x, draw_pos.y))
+
+    def draw_ai(self, screen):
+        scale = self.transform.get_scale() / 2.0
+        draw_pos = self.transform.get_position() - scale
+        color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
+        pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
         
     def die(self):
         print('I died')

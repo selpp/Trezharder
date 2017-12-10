@@ -35,7 +35,7 @@ def batch_norm(x):
                                   variance_epsilon=epsilon)
     return x
 
-def FC_layer(layer_name, x, out_nodes):
+def FC_layer(layer_name, x, out_nodes, activation_func = tf.nn.relu):
     shape = x.get_shape()
     if len(shape) == 4:
         size = shape[1].value * shape[2].value * shape[3].value
@@ -45,14 +45,20 @@ def FC_layer(layer_name, x, out_nodes):
     with tf.variable_scope(layer_name):
         w = tf.get_variable('weights',
                             shape=[size, out_nodes],
-                            initializer=tf.contrib.layers.xavier_initializer())
+                            initializer=tf.random_normal_initializer(stddev=0.02))
         b = tf.get_variable('biases',
                             shape=[out_nodes],
                             initializer=tf.constant_initializer(0.0))
+
+        # Debug
+        # tf.Print(w, [w])
+        # ===============
+
         flat_x = tf.reshape(x, [-1, size])
         
         x = tf.nn.bias_add(tf.matmul(flat_x, w), b)
-        x = tf.nn.relu(x)
+        if activation_func is not None:
+            x = activation_func(x)
         return x
 
 def load(data_path, session):

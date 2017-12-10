@@ -5,11 +5,13 @@ from transform import Transform
 from collider import BoxCollider
 from monobehaviour import MonoBehaviour
 from data_manager import DataManager
+import pygame
+from pygame import Rect
 # ===================================================
 # MAPMANAGER
 
 class TileMap(object):
-	def __init__(self, id,gameobject, position, angle, scale, data_manager, is_collider = False):
+	def __init__(self, id, gameobject, position, angle, scale, data_manager, is_collider = False):
 		self.data_manager = data_manager
 		self.id = id
 		self.transform = Transform(position, angle, scale)
@@ -21,6 +23,12 @@ class TileMap(object):
 		tile = self.data_manager.get_tile(self.id)
 		top_left = self.transform.get_position() - self.transform.get_scale() / 2.0
 		screen.blit(tile.img, (top_left.x, top_left.y))
+
+	def draw_ai(self, screen):
+		scale = self.transform.get_scale() / 2.0
+		draw_pos = self.transform.get_position() - scale
+		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
+		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
 	
 	def draw_debug(self, screen):
 		if self.collider is not None:
@@ -49,7 +57,7 @@ class MapManager(MonoBehaviour):
 		self.data_manager.load_tile('WOOD', 'WOOD.jpg', self.infos)
 
 	def start(self):
-         pass
+		 pass
 
 	def load(self, path = None):
 		self.map = []
@@ -73,13 +81,13 @@ class MapManager(MonoBehaviour):
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
 				self.map[y][x] = TileMap(key,self.gameobject, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-    	
+		
 	def update(self,dt):
-         pass
-     
+		 pass
+	 
 	def fixed_update(self,fdt):
-         pass
-     
+		 pass
+	 
 	def save(self, path):
 		if self.map is None:
 			return
@@ -99,6 +107,13 @@ class MapManager(MonoBehaviour):
 		for y in range(len(self.map)):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw(screen)
+
+	def draw_ai(self, screen):
+		if self.map is None:
+			return
+		for y in range(len(self.map)):
+			for x in range(len(self.map[0])):
+				self.map[y][x].draw_ai(screen)
 
 	def draw_debug(self, screen):
 		if self.map is None:

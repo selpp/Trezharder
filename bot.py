@@ -18,7 +18,9 @@ class BotStateWalkRunState(PlayerStateWalkRunState):
         self.shift = False
     
     def get_direction(self, bot):
-        move_x, move_y = bot.action_vector[0] * 2.0 - 1.0, bot.action_vector[1] * 2.0 - 1.0
+        x_l, x_r, y_u, y_d = bot.action_vector[0], bot.action_vector[1], bot.action_vector[2], bot.action_vector[3]
+        move_x = -x_l + x_r
+        move_y = -y_u + y_d
 
         if abs(move_x) < 0.01 and abs(move_y) < 0.01:
             self.does_exit = True
@@ -26,7 +28,7 @@ class BotStateWalkRunState(PlayerStateWalkRunState):
         bot.velocity.set(Vector(move_x, move_y).normalized())
 
     def set_all_speeds(self, bot):
-        shift = (bot.action_vector[2] > 0.5)
+        shift = (bot.action_vector[5] > 0.5)
         if not self.shift and shift:
             self.shift = shift
             self.animation_speed = self.initial_animation_speed * self.animation_speed_factor
@@ -55,7 +57,9 @@ class BotStateIdle(PlayerStateIdle):
         PlayerStateIdle.__init__(self, bot)
 
     def update(self, dt, bot):
-        x, y = bot.action_vector[0], bot.action_vector[1]
+        x_l, x_r, y_u, y_d = bot.action_vector[0], bot.action_vector[1], bot.action_vector[2], bot.action_vector[3]
+        x = -x_l + x_r
+        y = -y_u + y_d
         if abs(x) > 0.01 or abs(y) > 0.01:
             self.does_exit = True
 
@@ -116,12 +120,12 @@ class  BotDeathState(State):
 
 class Bot(Player):
     def __init__(self,is_rnd = True):
-        self.action_vector = [0 for i in range(4)]
+        self.action_vector = [0 for i in range(6)]
         self.explode = False
         self.rip = False
         self.is_rnd = is_rnd
         if not self.is_rnd:
-            self.action_vector[3] = 1
+            self.action_vector[5] = 1
         Player.__init__(self)
         self.color = 0 if is_rnd else 1
 
@@ -144,9 +148,6 @@ class Bot(Player):
 
         self.animator.add_animation('EXPLODE', a_explode)
 
-    def update(self, dt):
-        Player.update(self, dt)
-
     def fixed_update(self, fixed_dt):
         if self.rip:
             return
@@ -154,16 +155,11 @@ class Bot(Player):
         for ennemy in self.ennemies:
             if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
                 continue
-            if self.action_vector[3] and (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
+            if self.action_vector[5] and (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
                     self.explode = True
                     self.state_machine.state = BotStateExplode(self) 
                     self.rip = True
+                    GameEngineTools.DestroyObject(ennemy)
         if self.is_rnd:
-            if rnd.randint(0,10) == 10:
-                self.action_vector = [rnd.randint(0,1),rnd.randint(0,1),rnd.randint(0,1), 0]
-    
-    def draw(self, screen):
-        Player.draw(self, screen)
-
-    def z_buff(self, z_index, z_buffer):
-        Player.z_buff(self, z_index, z_buffer)
+            if rnd.randint(0,20) < 2:
+                self.action_vector = [0 for i in range(6)]#[rnd.randint(0,1), rnd.randint(0,1), rnd.randint(0,1), rnd.randint(0,1), rnd.randint(0,1), 0]

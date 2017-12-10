@@ -78,18 +78,6 @@ class HumanPlayer(Player):
 
         # ================= Input Manager =========================
         self.input_manager = InputManager.get_instance()
-        
-    def update(self, dt):
-        Player.update(self, dt)
     
     def on_collision(self,collider):
         print('yeah')
-
-    def fixed_update(self, fixed_dt):
-        Player.fixed_update(self, fixed_dt)
-
-    def draw(self, screen):
-        Player.draw(self, screen)
-
-    def z_buff(self, z_index, z_buffer):
-        Player.z_buff(self, z_index, z_buffer)
