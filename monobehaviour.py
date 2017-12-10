@@ -29,5 +29,8 @@ class MonoBehaviour(object):
 	def draw():
 		pass
 
+	def draw_ai():
+		pass
+
 	def on_collision(self,collider):
 	    pass

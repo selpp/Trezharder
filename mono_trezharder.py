@@ -27,15 +27,15 @@ class MonoTrezharder(MonoBehaviour):
         self.players = players
         '''
         player_rnd = Gameobject('player',Rigidbody(),tag = 'player')
-        player_rnd.add_mono([Bot()])
-        player_rnd.transform.get_position().x = 3 * 100.0 + 50.0
-        player_rnd.transform.get_position().y = 4 * 100.0 + 50.0
+        player_rnd.add_mono([HumanPlayer()])
+        player_rnd.transform.get_position().x = random.randint(2,5) * 100.0 + 50.0
+        player_rnd.transform.get_position().y = random.randint(2,3) * 100.0 + 50.0
         self.player_rnd = player_rnd
         
         player_deep = Gameobject('player',Rigidbody(),tag = 'player')
         player_deep.add_mono([BotBehaviour(),RewardCalculator(),Bot(is_rnd = False)])
-        player_deep.transform.get_position().x = 6 * 100.0 + 50.0
-        player_deep.transform.get_position().y = 4 * 100.0 + 50.0
+        player_deep.transform.get_position().x = random.randint(2,5) * 100.0 + 50.0
+        player_deep.transform.get_position().y = random.randint(2,3) * 100.0 + 50.0
         self.player_deep = player_deep
         
         my_map = Gameobject()
@@ -66,14 +66,15 @@ class MonoTrezharder(MonoBehaviour):
         game_manager = Gameobject(name='trezharder')
         game_manager.add_mono([MonoTrezharder()])
         GameEngineTools.instantiate(game_manager)
-            
         
     def update(self,dt):
         pass
     
     def fixed_update(self,fdt):
-        self.time += fdt
-        if self.time > 5.0:
+        #self.time += fdt
+        #if self.time > 5.0:
+            #self.restart()
+        if not self.player_deep.is_alive:
             self.restart()
     
     def draw(self):
