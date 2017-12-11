@@ -31,7 +31,7 @@ class DeepQModel(object):
         reward_decay = 0.99,
         momentum = 0.05,
         replace_target_iteration = 300,
-        memory_size = int(5e4),
+        memory_size = int(1e5),
         batch_size = 32
     ):
         self.n_actions = n_actions
@@ -39,14 +39,14 @@ class DeepQModel(object):
         self.height = height
         self.channels = channels
         self.n_features = width * height * channels
-        self.learning_rate = learning_rate
+        self.learning_rate = tf.Variable(learning_rate, name = 'learning_rate')
         self.gamma = reward_decay
         self.replace_target_iteration = replace_target_iteration
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.e_greedy = e_greedy
         self.momentum = momentum
-        self.explo_it = 5e4
+        self.explo_it = 1e6
         self.e_greedy_factor = (e_greedy - 0.1) / self.explo_it
 
 
@@ -100,6 +100,7 @@ class DeepQModel(object):
         with tf.variable_scope('train'):
             self.train_op = tf.train.RMSPropOptimizer(self.learning_rate,momentum=self.momentum).minimize(self.loss)
 
+        tf.summary.scalar('learning_rate', self.learning_rate)
         self.summary_op = tf.summary.merge_all()  
     
     def forward(self, x, n_actions):
@@ -174,7 +175,6 @@ class DeepQModel(object):
         p = np.random.uniform()
         frame = self.preprocess_frame(frame)
         action_vector = self._choose_random() if (not is_loaded and p < 0.05) or (p < self.e_greedy) else self._choose_ai(frame) 
-        #action_vector = self._choose_monte_carlo(frame)
         return action_vector
 
     def load(self):

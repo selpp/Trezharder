@@ -1,22 +1,29 @@
 # Data Manager
-from pygame import image,  Rect
+from pygame import image, Rect, mixer
 
 # ===================================================
 # DATAMANAGER
 
 class DataManager(object):
 	def __init__(self):
+		# mixer.init(44100, -16, 2, 2048)
 		self.sprite_sheets = {}
 		self.tiles = {}
-    
+		# self.sounds = {}
+	
 	instance = None
 	@staticmethod
 	def get_instance():
 		if DataManager.instance is None:
 			DataManager.instance = DataManager()
 		return DataManager.instance
-         
-    
+		 
+	def load_sound(self, id, sound_path):
+		if id in self.sounds:
+			return
+		sound = mixer.Sound(sound_path)
+		self.sounds[id] = Sound(sound)
+	
 	def load_sprite_sheet(self, id, sprite_sheet_path, infos):
 		if id in self.sprite_sheets:
 			return
@@ -89,3 +96,16 @@ class Tile(object):
 	def __init__(self, tile_image, infos):
 		self.img = tile_image
 		self.infos = infos
+
+# ===================================================
+# SOUND
+
+class Sound(object):
+	def __init__(self, sound):
+		self.sound = sound
+
+	def play(self):
+		self.sound.play()
+
+	def stop(self):
+		self.sound.stop()

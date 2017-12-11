@@ -1,7 +1,7 @@
-from monobehaviour import MonoBehaviour
+from reward import Reward
 from player import Player
 
-class RewardCalculator(MonoBehaviour):
+class RewardMurederer(Reward):
 	def start(self):
 		self.r = 0
 		self.reward_end = False
@@ -13,6 +13,7 @@ class RewardCalculator(MonoBehaviour):
 		pass
 
 	def fixed_update(self, fixed_dt):
+		self.r = 0
 		if self.reward_end:
 			return
 		if self.player.murderer:
@@ -22,8 +23,8 @@ class RewardCalculator(MonoBehaviour):
 			for ennemy in self.player.ennemies:
 				if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
 					continue
-			dist = (self.transform.get_position() - ennemy.transform.get_position()).magnitude()
-			self.r = -0.01 if dist > self.dist else (1 - (dist / self.dist)) / 5.0
+				dist = (self.transform.get_position() - ennemy.transform.get_position()).magnitude()
+				self.r = -0.01 if dist > self.dist else (1 - (dist / self.dist)) / 5.0
 			if self.collision:
 				self.r = -0.1
 				self.collision = False 

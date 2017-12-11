@@ -17,15 +17,12 @@ class MonoBehaviour(object):
 	def start(self):
 		pass
 
-	@abstractmethod
 	def update(self, dt):
 		pass
 
-	@abstractmethod
 	def fixed_update(self, fixed_dt):
 		pass
 
-	@abstractmethod
 	def draw():
 		pass
 

@@ -52,13 +52,13 @@ class PlayerStateWalkRunState(State):
 		move_x, move_y = 0, 0
 
 		if player.command.up:
-			move_y = -1.0
-		elif player.command.down:
-			move_y = 1.0
+			move_y -= 1.0
+		if player.command.down:
+			move_y += 1.0
 		if player.command.left:
-			move_x = -1.0
-		elif player.command.right:
-			move_x = 1.0
+			move_x -= 1.0
+		if player.command.right:
+			move_x += 1.0
 
 		if not(player.command.up or player.command.down or player.command.left or player.command.right):
 			self.does_exit = True
@@ -150,6 +150,8 @@ class  PlayerStateExplode(State):
 	def enter(self, player):
 		player.animator.set_animation('EXPLODE')
 		player.gameobject.rigidbody.set_velocity(Vector(0,0))
+		data_manager = DataManager.get_instance()
+		# data_manager.sounds['EXPLODE'].play()
 
 	def update(self, dt, player):
 		if player.explode:
@@ -193,15 +195,16 @@ class  BotDeathState(State):
 # BOT
 
 class Player(MonoBehaviour):
-	def __init__(self,command,color):
+	def __init__(self,command,color,ennemies_name=''):
 		MonoBehaviour.__init__(self,1)
 		self.command = command
 		self.color = color
+		self.ennemies_name = ennemies_name
 
 	def start(self):
 		# ================= State Machine =========================  
 		self.state_machine = PlayerFSM()
-		self.ennemies = GameEngineTools.find_all('player')
+		self.ennemies = GameEngineTools.find_all(self.ennemies_name)
 		self.rip = False
 		self.murderer = False
 		# ================= Transform =========================
@@ -256,7 +259,9 @@ class Player(MonoBehaviour):
 
 		self.animator.add_animation('EXPLODE', a_explode)
 
-  
+		# ===================== Sound ========================
+		# data_manager.load_sound('EXPLODE', 'EXPLODE.wav')
+
 		self.state_machine.state = PlayerStateIdle(self)
 		
 	def update(self, dt):
@@ -278,7 +283,7 @@ class Player(MonoBehaviour):
 		for ennemy in self.ennemies:
 			if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
 				continue
-			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 100.0:
+			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 50.0:
 					ennemy.get_mono(Player).die()
 					self.murderer = True
 			  
