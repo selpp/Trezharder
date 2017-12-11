@@ -30,7 +30,6 @@ class MonoTrezharder(Scene):
             my_spawn = spawns.pop(random.randint(0,len(spawns) - 1))
             player_rnd.transform.get_position().x = my_spawn[0] * 100.0 + 50.0
             player_rnd.transform.get_position().y = my_spawn[1] * 100.0 + 50.0
-            self.players_rnd.append(player_rnd)
             gameobjects.append(player_rnd) 
         
         
@@ -39,14 +38,12 @@ class MonoTrezharder(Scene):
         player_deep.add_mono([rc,Player(DeepPlayerCommand(rc),1,'player_rnd')])
         player_deep.transform.get_position().x = spawns[0][0] * 100.0 + 50.0
         player_deep.transform.get_position().y = spawns[0][1] * 100.0 + 50.0
-        self.player_deep = player_deep
         gameobjects.append(player_deep)
         
         my_map = Gameobject()
         mono_map = MapManager()
         my_map.add_mono([mono_map])
-        mono_map.load(path = 'MAP0.map')
-        self.my_map = my_map
+        mono_map.load_from_file(path = 'MAP0.map')
         gameobjects.append(my_map)
 
         restart_rule = Gameobject('')

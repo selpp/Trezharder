@@ -59,8 +59,8 @@ class MapManager(MonoBehaviour):
 	def start(self):
 		 pass
 
-	def load(self, path = None):
-		self.map = []
+	def load_from_file(self, path = None):
+		raw_map = []
 		with open(path) as file:
 			lines = file.readlines()
 			for line in lines:
@@ -69,19 +69,23 @@ class MapManager(MonoBehaviour):
 					if char != '\n':
 						row.append(int(char))
 				if len(row) > 0:
-					self.map.append(row)
-		self.width = len(self.map[0])
-		self.height = len(self.map)
-
-
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
+					raw_map.append(row)
+		self.load(raw_map)
+	
+	def load(self,raw_map):
+		self.raw_map = raw_map
+		self.width = len(self.raw_map[0])
+		self.height = len(self.raw_map)
+		self.map = [[None for x in range(self.width)] for y in range(self.height)]
+		for y in range(self.height):
+			for x in range(self.width):
 				position = Vector(x * self.infos.width + self.infos.width / 2.0, y * self.infos.height + self.infos.height / 2.0)
-				value = self.map[y][x]
+				value = self.raw_map[y][x]
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
 				self.map[y][x] = TileMap(key,self.gameobject, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-		
+	
+
 	def update(self,dt):
 		 pass
 	 
