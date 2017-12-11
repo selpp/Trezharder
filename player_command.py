@@ -59,6 +59,7 @@ class BotPlayerCommand(PlayerCommand):
     
     def __init__(self):
         PlayerCommand.__init__(self)
+        self.cmd = [rnd.randint(0,1) for i in range(6)]
         
     @abstractmethod
     def get_new_command(self):
@@ -74,10 +75,9 @@ class BotPlayerCommand(PlayerCommand):
     
 class RandomPlayerCommand(BotPlayerCommand):
     def __init__(self):
-        PlayerCommand.__init__(self)
-        self.cmd = [rnd.randint(0,1) for i in range(6)]
+        BotPlayerCommand.__init__(self)
         
     def get_new_command(self):
-        if rnd.randint(0,20) > 18:
+        if rnd.randint(0,20) > 15:
             self.cmd = [rnd.randint(0,1) for i in range(6)]
         self.vector_to_command(self.cmd)

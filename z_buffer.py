@@ -13,6 +13,9 @@ class ZElement(object):
 	def draw(self, screen):
 		self.value.draw(screen)
 
+	def draw_ai(self, screen):
+		self.value.draw_ai(screen)
+
 # ===================================================
 # ZLIST
 
@@ -30,6 +33,11 @@ class ZList(object):
 		self.content.sort(key = lambda x:x.value.transform.get_position().y)
 		for element in self.content:
 			element.draw(screen)
+
+	def draw_ai(self, screen):
+		self.content.sort(key = lambda x:x.value.transform.get_position().y)
+		for element in self.content:
+			element.draw_ai(screen)
 
 # ===================================================
 # ZBUFFER
@@ -55,3 +63,8 @@ class ZBuffer(object):
 		self.z_lists.sort(key = lambda x: x.z_index)
 		for z_list in self.z_lists:
 			z_list.draw(screen)
+
+	def draw_ai(self, screen):
+		self.z_lists.sort(key = lambda x: x.z_index)
+		for z_list in self.z_lists:
+			z_list.draw_ai(screen)
