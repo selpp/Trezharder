@@ -8,6 +8,8 @@ from game_engine import GameEngineTools
 from fsm import State, FSM
 import pygame
 from pygame import Rect
+import pygame
+from pygame import Rect
 # ===================================================
 # HUMANPLAYERFSM
 
