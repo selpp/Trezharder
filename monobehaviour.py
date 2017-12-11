@@ -31,3 +31,6 @@ class MonoBehaviour(object):
 
 	def on_collision(self,collider):
 	    pass
+
+	def z_buff(self, z_index, z_buffer):
+		pass

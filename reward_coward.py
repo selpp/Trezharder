@@ -31,6 +31,3 @@ class RewardCoward(Reward):
 		if self.player.command.A:
 			self.r = -0.1
 
-
-	def z_buff(self, z_index, z_buffer):
-		 pass

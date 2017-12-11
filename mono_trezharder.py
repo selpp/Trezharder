@@ -11,13 +11,16 @@ from player import Player
 from player_command import *
 from deep_player_command import DeepPlayerCommand
 import random
+from scene import Scene
+from restart_team_out import RestartTeamOut
 
-class MonoTrezharder(MonoBehaviour):
+class MonoTrezharder(Scene):
     def __init__(self):
-        MonoBehaviour.__init__(self)
         self.nb_ennemy = 8
+        Scene.__init__(self)
         
-    def start(self):
+    def load(self):
+        gameobjects = []
         spawns = [(2,1),(1,2),(1,3),(6,2),(6,3),(3.5,2.5),(5,1),(2,4),(5,4)]
 
         self.players_rnd = []
@@ -27,7 +30,8 @@ class MonoTrezharder(MonoBehaviour):
             my_spawn = spawns.pop(random.randint(0,len(spawns) - 1))
             player_rnd.transform.get_position().x = my_spawn[0] * 100.0 + 50.0
             player_rnd.transform.get_position().y = my_spawn[1] * 100.0 + 50.0
-            self.players_rnd.append(player_rnd) 
+            self.players_rnd.append(player_rnd)
+            gameobjects.append(player_rnd) 
         
         
         player_deep = Gameobject('player',Rigidbody(),tag = 'player')
@@ -36,47 +40,17 @@ class MonoTrezharder(MonoBehaviour):
         player_deep.transform.get_position().x = spawns[0][0] * 100.0 + 50.0
         player_deep.transform.get_position().y = spawns[0][1] * 100.0 + 50.0
         self.player_deep = player_deep
+        gameobjects.append(player_deep)
         
         my_map = Gameobject()
         mono_map = MapManager()
         my_map.add_mono([mono_map])
         mono_map.load(path = 'MAP0.map')
         self.my_map = my_map
+        gameobjects.append(my_map)
+
+        restart_rule = Gameobject('')
+        restart_rule.add_mono([RestartTeamOut(['player','player_rnd'])])
+        gameobjects.append(restart_rule)
         
-        #GameEngineTools.instantiate(player)
-        #for i in range(3):
-        for i in range(self.nb_ennemy):
-            GameEngineTools.instantiate(self.players_rnd[i])
-        GameEngineTools.instantiate(player_deep)
-        GameEngineTools.instantiate(my_map)
-        self.time = 0.0
-        
-    def restart(self):
-        GameEngineTools.DestroyObject(self.gameobject)
-        GameEngineTools.DestroyObject(self.my_map)
-        for i in range(self.nb_ennemy):
-            if self.players_rnd[i].is_alive:
-                GameEngineTools.DestroyObject(self.players_rnd[i])
-        if self.player_deep.is_alive:
-            GameEngineTools.DestroyObject(self.player_deep)
-        game_manager = Gameobject(name='trezharder')
-        game_manager.add_mono([MonoTrezharder()])
-        GameEngineTools.instantiate(game_manager)
-        
-    def update(self,dt):
-        pass
-    
-    def fixed_update(self,fdt):
-        if not self.player_deep.is_alive:# or not self.player_rnd.is_alive:
-            self.restart()
-            return
-        for i in range(self.nb_ennemy):
-            if self.players_rnd[i].is_alive:
-                return
-        self.restart()
-    
-    def draw(self):
-        pass
-    
-    def z_buff(self, z_index, z_buffer):
-        pass
+        return gameobjects
