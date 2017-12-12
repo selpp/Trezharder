@@ -17,6 +17,7 @@ class GameEngine:
         self.init_time()
         self.init_fixed_update()
         self.init_physics()
+        self.new_scene = None
         
     # ===== SCREEN ==================
     def init_screen(self,width=800,height=600):
@@ -59,6 +60,9 @@ class GameEngine:
         fps_label = self.fps_font.render('FDT: ' + str(self.fixed_timer), 1, (0, 255, 0))
         self.screen.blit(fps_label, (0, 44))
         
+    def set_scene(self,scene_loader):
+        self.new_scene_loader = scene_loader
+        
     def init_fixed_update(self):
         self.current_fixed_time = clock()
         self.fixed_dt = 0
@@ -78,9 +82,17 @@ class GameEngine:
         
         for gameobject in self.gameobjects:
             gameobject.fixed_update(self.fixed_rate)
+            
+        if self.new_scene_loader is not None:
+            self.new_scene_loader()
+            self.new_scene_loader = None
+            
           
         while len(self.destruct_list) > 0:
-            self.gameobjects.remove(self.destruct_list.pop())
+            gameobject = self.destruct_list.pop()
+            if gameobject.is_alive:
+                self.gameobjects.remove(gameobject)
+                gameobject.is_alive = False
             
         while len(self.waiting_gameobjects) > 0:
             new_gameobject = self.waiting_gameobjects.pop()
@@ -203,7 +215,12 @@ class GameEngineTools(object):
     def DestroyObject(gameobject):
         ge_tools = GameEngineTools.instance
         ge_tools.ge.destruct_list.append(gameobject)
-        gameobject.is_alive = False
+        
+    @staticmethod
+    def destroy_scene():
+        ge_tools = GameEngineTools.instance
+        for gameobject in ge_tools.ge.gameobjects:
+            ge_tools.ge.destruct_list.append(gameobject)
 
     @staticmethod
     def pause():
@@ -240,3 +257,8 @@ class GameEngineTools(object):
         image = image.convert('L',(0.2889,0.5870,0.1140,0))
 
         return np.array(image)
+    
+    @staticmethod
+    def set_new_scene(scene_loader):
+        ge_tools = GameEngineTools.instance
+        ge_tools.ge.set_scene(scene_loader)
