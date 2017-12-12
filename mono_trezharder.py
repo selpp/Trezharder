@@ -18,7 +18,7 @@ class MonoTrezharder(Scene):
     def __init__(self):
         self.nb_ennemy = 8
         Scene.__init__(self)
-        
+
     def load(self):
         gameobjects = []
         spawns = [(2,1),(1,2),(1,3),(6,2),(6,3),(3.5,2.5),(5,1),(2,4),(5,4)]
@@ -30,16 +30,16 @@ class MonoTrezharder(Scene):
             my_spawn = spawns.pop(random.randint(0,len(spawns) - 1))
             player_rnd.transform.get_position().x = my_spawn[0] * 100.0 + 50.0
             player_rnd.transform.get_position().y = my_spawn[1] * 100.0 + 50.0
-            gameobjects.append(player_rnd) 
-        
-        
+            gameobjects.append(player_rnd)
+
+
         player_deep = Gameobject('player',Rigidbody(),tag = 'player')
         rc = RewardCoward()
         player_deep.add_mono([rc,Player(DeepPlayerCommand(rc),1,'player_rnd')])
         player_deep.transform.get_position().x = spawns[0][0] * 100.0 + 50.0
         player_deep.transform.get_position().y = spawns[0][1] * 100.0 + 50.0
         gameobjects.append(player_deep)
-        
+
         my_map = Gameobject()
         mono_map = MapManager()
         my_map.add_mono([mono_map])
@@ -49,5 +49,5 @@ class MonoTrezharder(Scene):
         restart_rule = Gameobject('')
         restart_rule.add_mono([RestartTeamOut(['player','player_rnd'])])
         gameobjects.append(restart_rule)
-        
+
         return gameobjects

@@ -300,7 +300,7 @@ class Player(MonoBehaviour):
 		scale_half = scale / 2.0
 		draw_pos = self.transform.get_position() - scale_half
 		color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
-		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
+		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x, scale.y))
 
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)

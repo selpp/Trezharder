@@ -53,7 +53,7 @@ class MapManager(MonoBehaviour):
 			'WOOD': 2
 		}
 
-		self.infos = TileInfos(50, 50)
+		self.infos = TileInfos(100, 100)
 		self.data_manager.load_tile('CLAY', 'CLAY.jpg', self.infos)
 		self.data_manager.load_tile('STONE', 'STONE.jpg', self.infos)
 		self.data_manager.load_tile('WOOD', 'WOOD.jpg', self.infos)

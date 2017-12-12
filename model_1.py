@@ -5,15 +5,20 @@ import random
 import matplotlib.pyplot as plt
 import pickle
 
+SUMMARY_STEP = 30
+SUMMARY = 'logs/'
+
+SAVE_STEP = 5000
 CHECKPOINT = 'checkpoints/model.ckpt'
 MEMORY = 'checkpoints/memory.save'
 
 class SaveInfos(object):
-    def __init__(self, learn_step_counter, memory_counter, prev_action_vector, memory):
+    def __init__(self, learn_step_counter, memory_counter, prev_action_vector, memory, e_greedy):
         self.learn_step_counter = learn_step_counter
         self.memory_counter = memory_counter
         self.prev_action_vector = prev_action_vector
         self.memory = memory
+        self.e_greedy = e_greedy
 
 class Memo(object):
     def __init__(self, s, a, r, s_):
@@ -55,7 +60,7 @@ class DeepQModel(object):
         self.replace_target_iteration = replace_target_iteration
         self.memory_size = memory_size
         self.batch_size = batch_size
-        self.e_greedy = tf.Variable(e_greedy, name = 'e_greedy')
+        self.e_greedy = e_greedy
         self.momentum = momentum
         self.explo_it = 1e6
         self.e_greedy_factor = (e_greedy - 0.1) / self.explo_it
@@ -78,7 +83,7 @@ class DeepQModel(object):
             self.replace_target_op = [tf.assign(t, e) for t, e in zip(t_params, e_params)]
 
         self.sess = tf.Session()
-        self.summary_writer = tf.summary.FileWriter('logs/', self.sess.graph)
+        self.summary_writer = tf.summary.FileWriter(SUMMARY, self.sess.graph)
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
 
@@ -112,7 +117,6 @@ class DeepQModel(object):
             self.train_op = tf.train.RMSPropOptimizer(self.learning_rate,momentum=self.momentum).minimize(self.loss)
 
         tf.summary.scalar('learning_rate', self.learning_rate)
-        tf.summary.scalar('e_greedy', self.learning_rate)
         self.summary_op = tf.summary.merge_all()
 
     def forward(self, x, n_actions):
@@ -197,12 +201,13 @@ class DeepQModel(object):
             self.memory_counter = save_infos.memory_counter
             self.prev_action_vector = save_infos.prev_action_vector
             self.memory = save_infos.memory
+            self.e_greedy = save_infos.e_greedy
 
     def save(self):
         self.saver.save(self.sess, CHECKPOINT)
-        whit open(MEMORY, 'w') as file:
-            save_infos = SaveInfos(self.learn_step_counter, self.memory_counter, self.prev_action_vector, self.memory)
-            pickle.dump(save_infos, file)
+        '''with open(MEMORY, 'w') as file:
+            save_infos = SaveInfos(self.learn_step_counter, self.memory_counter, self.prev_action_vector, self.memory, self.e_greedy)
+            pickle.dump(save_infos, file)'''
 
     def learn(self):
         if self.learn_step_counter % self.replace_target_iteration == 0 and self.learn_step_counter != 0:
@@ -229,9 +234,9 @@ class DeepQModel(object):
         self.e_greedy = self.e_greedy - self.e_greedy_factor if self.e_greedy > 0.1 else 0.1
         self.learn_step_counter += 1
 
-        if self.learn_step_counter % 30 == 0 and self.learn_step_counter > 0:
+        if self.learn_step_counter % SUMMARY_STEP == 0 and self.learn_step_counter > 0:
             self.summary_writer.add_summary(summary_str, self.learn_step_counter)
-        if self.learn_step_counter % 5000 == 0 and self.learn_step_counter > 0:
+        if self.learn_step_counter % SAVE_STEP == 0 and self.learn_step_counter > 0:
             self.save()
 
 if __name__ == '__main__':

@@ -1,8 +1,10 @@
 from player_command import BotPlayerCommand
 from game_engine import GameEngineTools
+from input_manager import InputManager
 
 class DeepPlayerCommand(BotPlayerCommand):
     step = 0
+
     def __init__(self,reward_calculator):
         BotPlayerCommand.__init__(self)
         self.rc = reward_calculator
@@ -16,6 +18,7 @@ class DeepPlayerCommand(BotPlayerCommand):
 
     def get_new_command(self):
         GameEngineTools.pause()
+
         GameEngineTools.update_current_screen_ai()
         curr = GameEngineTools.get_current_screen_ai()
 
@@ -26,12 +29,14 @@ class DeepPlayerCommand(BotPlayerCommand):
             self.model.store_transition(self.prev, self.old_action.index(1), self.rc.r, curr)
             if DeepPlayerCommand.step > self.model.memory_size:
                 self.model.learn()
-            
+
         self.print_action()
         self.print_model_data()
+
         self.old_action = self.action_vector
         self.prev = curr
         self.has_played = True
+
         GameEngineTools.restart()
         DeepPlayerCommand.step += 1
 
