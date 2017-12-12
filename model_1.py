@@ -47,7 +47,7 @@ class DeepQModel(object):
         reward_decay = 0.99,
         momentum = 0.05,
         replace_target_iteration = 300,
-        memory_size = int(1e5),
+        memory_size = int(6e4),
         batch_size = 32
     ):
         self.n_actions = n_actions
@@ -62,7 +62,7 @@ class DeepQModel(object):
         self.batch_size = batch_size
         self.e_greedy = e_greedy
         self.momentum = momentum
-        self.explo_it = 1e6
+        self.explo_it = 2e5
         self.e_greedy_factor = (e_greedy - 0.1) / self.explo_it
 
 

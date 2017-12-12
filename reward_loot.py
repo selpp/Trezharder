@@ -23,10 +23,10 @@ class RewardLoot(Reward):
 			self.r = -1
 			self.collision = False
 		else:
-			self.r = -0.4
+			self.r = -0.1
 
 		if self.player.command.A == 1:
-			self.r = -0.1
+			self.r = -0.4
 
 	def on_collision(self,collider):
 		self.collision = True
