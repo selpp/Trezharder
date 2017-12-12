@@ -6,7 +6,7 @@ from collider import BoxCollider
 from monobehaviour import MonoBehaviour
 from data_manager import DataManager
 import pygame
-from pygame import Rect
+from pygame import Rect, transform
 # ===================================================
 # MAPMANAGER
 
@@ -22,14 +22,16 @@ class TileMap(object):
 	def draw(self, screen):
 		tile = self.data_manager.get_tile(self.id)
 		top_left = self.transform.get_position() - self.transform.get_scale() / 2.0
-		screen.blit(tile.img, (top_left.x, top_left.y))
+		scale = self.transform.get_scale()
+		resized = transform.scale(tile.img, (scale.x, scale.y))
+		screen.blit(resized, (top_left.x, top_left.y))
 
 	def draw_ai(self, screen):
 		scale = self.transform.get_scale() / 2.0
 		draw_pos = self.transform.get_position() - scale
 		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
-	
+
 	def draw_debug(self, screen):
 		if self.collider is not None:
 			self.collider.draw_debug(screen)
@@ -51,7 +53,7 @@ class MapManager(MonoBehaviour):
 			'WOOD': 2
 		}
 
-		self.infos = TileInfos(100, 100)
+		self.infos = TileInfos(50, 50)
 		self.data_manager.load_tile('CLAY', 'CLAY.jpg', self.infos)
 		self.data_manager.load_tile('STONE', 'STONE.jpg', self.infos)
 		self.data_manager.load_tile('WOOD', 'WOOD.jpg', self.infos)
@@ -71,7 +73,7 @@ class MapManager(MonoBehaviour):
 				if len(row) > 0:
 					raw_map.append(row)
 		self.load(raw_map)
-	
+
 	def load(self,raw_map):
 		self.raw_map = raw_map
 		self.width = len(self.raw_map[0])
@@ -84,14 +86,14 @@ class MapManager(MonoBehaviour):
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
 				self.map[y][x] = TileMap(key,self.gameobject, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-	
+
 
 	def update(self,dt):
 		 pass
-	 
+
 	def fixed_update(self,fdt):
 		 pass
-	 
+
 	def save(self, path):
 		if self.map is None:
 			return
@@ -126,7 +128,7 @@ class MapManager(MonoBehaviour):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw_debug(screen)
 
-	
+
 	def z_buff(self, z_index, z_buffer):
 		if self.map is None:
 			return

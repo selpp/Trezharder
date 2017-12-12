@@ -1,5 +1,5 @@
 # Input Manager
-from pygame import KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_SPACE, K_LSHIFT
+from pygame import KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_SPACE, K_LSHIFT, K_t
 
 # ===================================================
 # INPUTMANAGER
@@ -7,16 +7,17 @@ from pygame import KEYDOWN, KEYUP, K_z, K_q, K_s, K_d, K_SPACE, K_LSHIFT
 class InputManager(object):
 	def __init__(self):
 		self.key_booleans = {
-			'UP': [False, K_z], 
-			'DOWN': [False, K_s], 
-			'LEFT': [False, K_q], 
+			'UP': [False, K_z],
+			'DOWN': [False, K_s],
+			'LEFT': [False, K_q],
 			'RIGHT': [False, K_d],
 			'FIRE1': [False, K_SPACE],
-			'LSHIFT': [False, K_LSHIFT]
+			'LSHIFT': [False, K_LSHIFT],
+			'DEEP_MODE': [False, K_t]
 		}
 
 		self.events = None
-	
+
 	instance = None
 
 	@staticmethod
