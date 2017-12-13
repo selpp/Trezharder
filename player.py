@@ -212,7 +212,9 @@ class Player(MonoBehaviour):
 		self.explode = False
 
 		# ================= Collider ==========================
-		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3) , self.gameobject))
+		self.box_scale = Vector(0.3, 0.3)
+		self.box_translation = Vector(0.0, 25.0)
+		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, self.box_translation, self.box_scale, self.gameobject))
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -296,9 +298,9 @@ class Player(MonoBehaviour):
 		screen.blit(resized, (draw_pos.x, draw_pos.y))
 
 	def draw_ai(self, screen):
-		scale = self.transform.get_scale()
+		scale = self.transform.get_scale() * self.box_scale
 		scale_half = scale / 2.0
-		draw_pos = self.transform.get_position() - scale_half
+		draw_pos = self.transform.get_position() + self.box_translation - scale_half
 		color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x, scale.y))
 
