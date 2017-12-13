@@ -27,23 +27,26 @@ class PacManScene(Scene):
         gameobjects.append(my_map)
 
         spawner = RandomSpawner()
-        my_spawn = spawner.spawn(2,map)
+        my_spawn = spawner.spawn(-1,map)
 
         player_rnd = Gameobject('player_rnd',Rigidbody(),tag = 'player')
         reward = RewardLoot()
-        player_rnd.add_mono([reward, Player(DeepPlayerCommand(reward), 1, 'object')])
+        player_rnd.add_mono([reward, Player(RandomPlayerCommand(), 1, 'object')])
         player_rnd.transform.get_position().x = my_spawn[0][1] * 100.0 + 50.0
         player_rnd.transform.get_position().y = my_spawn[0][0] * 100.0 + 50.0
         gameobjects.append(player_rnd)
 
-        player_target = Gameobject('object',Rigidbody(),tag = 'player')
-        player_target.add_mono([Player(StaticPlayerCommand(),0,'object')])
-        player_target.transform.get_position().x = my_spawn[1][1] * 100.0 + 50.0
-        player_target.transform.get_position().y = my_spawn[1][0] * 100.0 + 50.0
-        gameobjects.append(player_target)
+        for i in range(1,len(my_spawn)):
+            player_target = Gameobject('object',Rigidbody(),tag = 'player')
+            player_target.add_mono([Player(StaticPlayerCommand(),0,'object')])
+            player_target.transform.get_position().x = my_spawn[i][1] * 100.0 + 50.0
+            player_target.transform.get_position().y = my_spawn[i][0] * 100.0 + 50.0
+            gameobjects.append(player_target)
+            
 
         restart_rule = Gameobject('')
         restart_rule.add_mono([RestartTimeOut(10.0),RestartTeamOut(['object','player_rnd'])])
         gameobjects.append(restart_rule)
+        
 
         return gameobjects
