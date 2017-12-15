@@ -212,9 +212,9 @@ class Player(MonoBehaviour):
 		self.explode = False
 
 		# ================= Collider ==========================
-		self.box_scale = Vector(0.3, 0.3)
-		self.box_translation = Vector(0.0, 25.0)
-		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, self.box_translation, self.box_scale, self.gameobject))
+		box_scale = Vector(0.3, 0.3)
+		box_translation = Vector(0.0, 25.0)
+		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, box_translation, box_scale, self.gameobject))
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -297,12 +297,16 @@ class Player(MonoBehaviour):
 		resized = transform.scale(self.animator.current_sprite, (scale.x, scale.y))
 		screen.blit(resized, (draw_pos.x, draw_pos.y))
 
-	def draw_ai(self, screen):
-		scale = self.transform.get_scale() * self.box_scale
-		scale_half = scale / 2.0
-		draw_pos = self.transform.get_position() + self.box_translation - scale_half
+	def draw_simplified_vision(self, screen):
+		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
 		color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
-		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x, scale.y))
+		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
+	def draw_feature_map(self, id):
+		if not id in DataManager.get_instance().feature_maps:
+			return
+		if id == 'SIMPLIFIED':
+			self.draw_simplified_vision(DataManager.instance.feature_maps[id])
 
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)

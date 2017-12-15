@@ -17,7 +17,7 @@ class PacManScene(Scene):
 
     def load(self):
         gameobjects = []
-        maze_genarator = MazeGenerator(8,6)
+        maze_genarator = MazeGenerator(8, 6)
         map = maze_genarator.generate()
 
         my_map = Gameobject()
@@ -29,9 +29,9 @@ class PacManScene(Scene):
         spawner = RandomSpawner()
         my_spawn = spawner.spawn(-1,map)
 
-        player_rnd = Gameobject('player_rnd',Rigidbody(),tag = 'player')
+        player_rnd = Gameobject('player_rnd', Rigidbody(), tag = 'player')
         reward = RewardLoot()
-        player_rnd.add_mono([reward, Player(RandomPlayerCommand(), 1, 'object')])
+        player_rnd.add_mono([reward, Player(DeepPlayerCommand(reward), 1, 'object')])
         player_rnd.transform.get_position().x = my_spawn[0][1] * 100.0 + 50.0
         player_rnd.transform.get_position().y = my_spawn[0][0] * 100.0 + 50.0
         gameobjects.append(player_rnd)
@@ -42,11 +42,11 @@ class PacManScene(Scene):
             player_target.transform.get_position().x = my_spawn[i][1] * 100.0 + 50.0
             player_target.transform.get_position().y = my_spawn[i][0] * 100.0 + 50.0
             gameobjects.append(player_target)
-            
+
 
         restart_rule = Gameobject('')
-        restart_rule.add_mono([RestartTimeOut(10.0),RestartTeamOut(['object','player_rnd'])])
+        restart_rule.add_mono([RestartTimeOut(10.0), RestartTeamOut(['object','player_rnd'])])
         gameobjects.append(restart_rule)
-        
+
 
         return gameobjects

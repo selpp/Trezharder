@@ -22,11 +22,12 @@ class RewardLoot(Reward):
 		elif self.collision:
 			self.r = -1
 			self.collision = False
-		else:
-			self.r = -0.1
+			return
 
 		if self.player.command.A == 1:
 			self.r = -0.4
+		elif self.player.command.left != 0 or self.player.command.right != 0:
+			self.r = -0.05
 
 	def on_collision(self,collider):
 		self.collision = True

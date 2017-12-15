@@ -26,11 +26,15 @@ class TileMap(object):
 		resized = transform.scale(tile.img, (scale.x, scale.y))
 		screen.blit(resized, (top_left.x, top_left.y))
 
-	def draw_ai(self, screen):
+	def draw_simplified_vision(self, screen):
 		scale = self.transform.get_scale() / 2.0
 		draw_pos = self.transform.get_position() - scale
 		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
+
+	def draw_feature_map(self, a):
+		if a == 'SIMPLIFIED':
+			self.draw_simplified_vision(DataManager.get_instance().feature_maps[a])
 
 	def draw_debug(self, screen):
 		if self.collider is not None:
@@ -114,12 +118,12 @@ class MapManager(MonoBehaviour):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw(screen)
 
-	def draw_ai(self, screen):
+	def draw_feature_map(self, id):
 		if self.map is None:
 			return
 		for y in range(len(self.map)):
 			for x in range(len(self.map[0])):
-				self.map[y][x].draw_ai(screen)
+				self.map[y][x].draw_feature_map(id)
 
 	def draw_debug(self, screen):
 		if self.map is None:

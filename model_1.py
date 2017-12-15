@@ -45,9 +45,10 @@ class DeepQModel(object):
         learning_rate = 25e-5,
         e_greedy = 1.0,
         reward_decay = 0.99,
+        explo_it = 2e5,
         momentum = 0.05,
         replace_target_iteration = 300,
-        memory_size = int(6e4),
+        memory_size = int(1e5),
         batch_size = 32
     ):
         self.n_actions = n_actions
@@ -55,22 +56,26 @@ class DeepQModel(object):
         self.height = height
         self.channels = channels
         self.n_features = width * height * channels
-        self.learning_rate = tf.Variable(learning_rate, name = 'learning_rate')
+
+        self.learning_rate = learning_rate
+        self.momentum = momentum
+        self.batch_size = batch_size
+        self.learn_step_counter = 0
+
         self.gamma = reward_decay
         self.replace_target_iteration = replace_target_iteration
         self.memory_size = memory_size
-        self.batch_size = batch_size
-        self.e_greedy = e_greedy
-        self.momentum = momentum
-        self.explo_it = 2e5
+
+        self.explo_it = explo_it
         self.e_greedy_factor = (e_greedy - 0.1) / self.explo_it
+        self.e_greedy_start = e_greedy
+        self.observable_e_greedy = e_greedy
 
-
-        self.learn_step_counter = 0
         self.memory_counter = 0
         i_ = random.randint(0, self.n_actions - 1)
         self.prev_action_vector = [0 if i_ != i else 1 for i in range(self.n_actions)]
         self.memory = []
+
         self.is_ai = False
 
         self.estimated_reward = 0
@@ -116,7 +121,14 @@ class DeepQModel(object):
         with tf.variable_scope('train'):
             self.train_op = tf.train.RMSPropOptimizer(self.learning_rate,momentum=self.momentum).minimize(self.loss)
 
+        # epsilon greedy
+        with tf.variable_scope('epsilon_greedy'):
+            self.e_greedy = tf.Variable(self.e_greedy_start, name = 'e_greedy')
+            self.e_greedy_decay = tf.assign(self.e_greedy, tf.where(tf.less_equal(self.e_greedy, 0.1), 0.1, self.e_greedy - self.e_greedy_factor))
+            tf.summary.scalar('e_greedy', self.e_greedy)
+
         tf.summary.scalar('learning_rate', self.learning_rate)
+
         self.summary_op = tf.summary.merge_all()
 
     def forward(self, x, n_actions):
@@ -190,18 +202,19 @@ class DeepQModel(object):
     def choose_action(self, frame, is_loaded = False):
         p = np.random.uniform()
         frame = self.preprocess_frame(frame)
-        action_vector = self._choose_random() if (not is_loaded and p < 0.05) or (p < self.e_greedy) else self._choose_ai(frame)
+        e_greedy = self.sess.run(self.e_greedy)
+        action_vector = self._choose_random() if (not is_loaded and p < 0.05) or (p < e_greedy) else self._choose_ai(frame)
         return action_vector
 
     def load(self):
         self.saver.restore(self.sess, CHECKPOINT)
-        with open(MEMORY, 'r') as file:
+        '''with open(MEMORY, 'r') as file:
             save_infos = pickle.load(file)
             self.learn_step_counter = save_infos.learn_step_counter
             self.memory_counter = save_infos.memory_counter
             self.prev_action_vector = save_infos.prev_action_vector
             self.memory = save_infos.memory
-            self.e_greedy = save_infos.e_greedy
+            self.e_greedy = save_infos.e_greedy'''
 
     def save(self):
         self.saver.save(self.sess, CHECKPOINT)
@@ -230,8 +243,9 @@ class DeepQModel(object):
                 self.r: rewards,
                 self.s_: states_,
         })
+        _, e_greedy = self.sess.run([self.e_greedy_decay, self.e_greedy])
+        self.observable_e_greedy = e_greedy
 
-        self.e_greedy = self.e_greedy - self.e_greedy_factor if self.e_greedy > 0.1 else 0.1
         self.learn_step_counter += 1
 
         if self.learn_step_counter % SUMMARY_STEP == 0 and self.learn_step_counter > 0:
