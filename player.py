@@ -263,6 +263,9 @@ class Player(MonoBehaviour):
 
 		self.state_machine.state = PlayerStateIdle(self)
 
+		# Params
+		self.range = 50.0
+
 	def update(self, dt):
 		self.animator.update(dt)
 		self.state_machine.update(dt, self)
@@ -282,7 +285,7 @@ class Player(MonoBehaviour):
 		for ennemy in self.ennemies:
 			if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
 				continue
-			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 50.0:
+			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < self.range:
 					ennemy.get_mono(Player).die()
 					self.murderer = True
 
@@ -297,16 +300,37 @@ class Player(MonoBehaviour):
 		resized = transform.scale(self.animator.current_sprite, (scale.x, scale.y))
 		screen.blit(resized, (draw_pos.x, draw_pos.y))
 
-	def draw_simplified_vision(self, screen):
+	def draw_collision_vision(self, screen):
+		if self.rip or self.color == 1:
+			return
 		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
-		color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
+		color = (120, 120, 120)
 		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
+	def draw_player_vision(self, screen):
+		if self.rip or self.color == 0:
+			return
+		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
+		color = (255, 255, 255)
+		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
+	def draw_range_vision(self, screen):
+		if self.rip or self.color == 0:
+			return
+		pos = self.transform.get_position()
+		half_range = self.range / 2.0
+		color = (255, 255, 255)
+		pygame.draw.circle(screen, color, (int(pos.x), int(pos.y)), int(self.range))
 
 	def draw_feature_map(self, id):
 		if not id in DataManager.get_instance().feature_maps:
 			return
-		if id == 'SIMPLIFIED':
-			self.draw_simplified_vision(DataManager.instance.feature_maps[id])
+		if id == 'COLLISIONS':
+			self.draw_collision_vision(DataManager.instance.feature_maps[id])
+		elif id == 'PLAYER':
+			self.draw_player_vision(DataManager.instance.feature_maps[id])
+		elif id == 'RANGE':
+			self.draw_range_vision(DataManager.instance.feature_maps[id])
 
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)

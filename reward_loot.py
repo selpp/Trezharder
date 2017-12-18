@@ -12,13 +12,15 @@ class RewardLoot(Reward):
 		pass
 
 	def fixed_update(self, fixed_dt):
-		self.r = -0.1
+		self.r = -0.05
 		if self.reward_end:
 			return
 
 		if self.player.murderer:
 			self.r = 1
 			self.reward_end = True
+		elif self.player.command.B == 1:
+			self.r = -0.1
 		elif self.collision:
 			self.r = -1
 			self.collision = False

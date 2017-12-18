@@ -178,7 +178,9 @@ class GameEngineTools(object):
 
         self.current_feature_maps = {}
 
-        DataManager.get_instance().add_feature_map('SIMPLIFIED', self.ge.width, self.ge.height)
+        DataManager.get_instance().add_feature_map('COLLISIONS', self.ge.width, self.ge.height)
+        DataManager.get_instance().add_feature_map('PLAYER', self.ge.width, self.ge.height)
+        DataManager.get_instance().add_feature_map('RANGE', self.ge.width, self.ge.height)
 
         ge.restart_timers()
         GameEngineTools.instance = self
