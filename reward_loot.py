@@ -12,7 +12,7 @@ class RewardLoot(Reward):
 		pass
 
 	def fixed_update(self, fixed_dt):
-		self.r = 0
+		self.r = -0.1
 		if self.reward_end:
 			return
 
@@ -26,8 +26,6 @@ class RewardLoot(Reward):
 
 		if self.player.command.A == 1:
 			self.r = -0.4
-		elif self.player.command.left != 0 or self.player.command.right != 0:
-			self.r = -0.05
 
 	def on_collision(self,collider):
 		self.collision = True

@@ -7,7 +7,7 @@ from z_buffer import ZBuffer
 from pygame import image, surfarray, Surface
 from PIL import Image
 import numpy as np
-from model_1 import DeepQModel
+from double_dueling_deep_q_learning import DDDQN
 
 class GameEngine:
     def __init__(self):
@@ -174,7 +174,7 @@ class GameEngineTools(object):
 
         self.deep_width = 64
         self.deep_height = 64
-        self.model = DeepQModel(width = self.deep_width, height = self.deep_height)
+        self.model = DDDQN()
 
         self.current_feature_maps = {}
 
