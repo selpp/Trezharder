@@ -10,7 +10,6 @@ class DeepPlayerCommand(BotPlayerCommand):
     def __init__(self,reward_calculator):
         BotPlayerCommand.__init__(self)
         self.rc = reward_calculator
-        self.model = GameEngineTools.instance.model
         self.old_action = [0 if i != 0 else 1 for i in range(len(self.cmd))]
         self.prev = None
         self.action_vector = None
@@ -29,16 +28,15 @@ class DeepPlayerCommand(BotPlayerCommand):
             i += 1
         curr = np.array(curr)
 
-
-        if self.model.global_step % UPDATE_FREQUENCY == 0:
-            action_index = self.model.choose_action(curr)
+        if GameEngineTools.instance.model.global_step % UPDATE_FREQUENCY == 0:
+            action_index = GameEngineTools.instance.model.choose_action(curr)
             self.action_vector = [0 if i != action_index else 1 for i in range(ACTIONS)]
         else:
             self.action_vector = self.old_action
         self.vector_to_command(self.action_vector)
         if self.has_played:
-            self.model.store(self.prev, self.old_action.index(1), self.rc.r, curr)
-        self.model.training_step()
+            GameEngineTools.instance.model.store(self.prev, self.old_action.index(1), self.rc.r, curr)
+        GameEngineTools.instance.model.training_step()
 
         print('==================== AI ======================')
         self.print_action()
@@ -55,11 +53,11 @@ class DeepPlayerCommand(BotPlayerCommand):
         plain = u'\u2588'
         block = u'\u2591'
 
-        full = plain if self.model.memory.buffer_size >= MEMORY_SIZE else block
+        full = plain if GameEngineTools.instance.model.memory.buffer_size >= MEMORY_SIZE else block
 
         print('Reward: ' + str(self.rc.r))
-        print('Epsilon: ' + str(self.model.e))
-        print('Step: ' + str(self.model.global_step))
+        print('Epsilon: ' + str(GameEngineTools.instance.model.e))
+        print('Step: ' + str(GameEngineTools.instance.model.global_step))
         print('Memory full: ' + full)
 
     def print_action(self):
@@ -72,7 +70,7 @@ class DeepPlayerCommand(BotPlayerCommand):
         down = plain if self.down == 1 else block
         shift = plain if self.A == 1 else block
         explode = plain if self.B == 1 else block
-        ai = plain if self.model.is_ai else block
+        ai = plain if GameEngineTools.instance.model.is_ai else block
 
         print('')
         print('    ' + up)

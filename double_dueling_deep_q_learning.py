@@ -19,14 +19,14 @@ H_SIZE = 512
 LEARNING_RATE = 25e-5
 BATCH = 32
 
-EPISODE_START = 1e4#2e5
+EPISODE_START = 1e5
 E_GREEDY = 1.0
 REWARD_DECAY = 0.99
-EXPLORATION = 1e4#1e6
+EXPLORATION = 1e6
 
 REPLACE_TARGET = 300
 TAU = 1e-3
-MEMORY_SIZE = int(1e4)#int(2e5)
+MEMORY_SIZE = int(1e5)
 
 UPDATE_FREQUENCY = 8
 
@@ -70,7 +70,8 @@ class Memory(object):
 
 # Deep QNetwork
 class DQN(object):
-    def __init__(self, h_size, name):
+    def __init__(self, h_size, name, is_summary = False):
+        self.is_summary = is_summary
         with tf.variable_scope(name):
             self.image_in = tf.placeholder(
                 name = 'ImageInput',
@@ -200,11 +201,12 @@ class DDDQN(object):
             self.main_qn = DQN(H_SIZE, 'MainDQN')
             self.target_qn = DQN(H_SIZE, 'TargetDQN')
 
-            self.trainables = tf.trainable_variables()
-            self.target_replace = self._replace(
-                self.trainables,
-                TAU
-            )
+            with tf.variable_scope('Replace'):
+                self.trainables = tf.trainable_variables()
+                self.target_replace = self._replace(
+                    self.trainables,
+                    TAU
+                )
 
             self.memory = Memory(MEMORY_SIZE)
 
@@ -255,7 +257,7 @@ class DDDQN(object):
             a = self.sess.run(
                 self.main_qn.predict,
                 feed_dict = {
-                    self.main_qn.image_in: [image_input]
+                    self.main_qn.image_in: (((np.array([image_input]) / 255.0) - 0.5) * 2.0)
                 }
             )[0]
             self.is_ai = True
@@ -265,7 +267,7 @@ class DDDQN(object):
     def training_step(self):
         self.global_step += 1
         if self.global_step > EPISODE_START:
-            self.e = self.e - self.e_factor if self.e > 0.1 else self.e
+            self.e = self.e - self.e_factor if self.e > 0.1 else 0.1
 
             if self.global_step % UPDATE_FREQUENCY == 0 and self.global_step != 0:
                 batch_s, batch_a, batch_r, batch_s_ = self.memory.sample(BATCH)
