@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 # ========== Params =============
 SUMMARY_STEP = 30
@@ -22,13 +23,41 @@ BATCH = 32
 EPISODE_START = 1e5
 E_GREEDY = 1.0
 REWARD_DECAY = 0.99
-EXPLORATION = 1e6
+EXPLORATION = 1e5
 
-REPLACE_TARGET = 300
 TAU = 1e-3
 MEMORY_SIZE = int(1e5)
 
 UPDATE_FREQUENCY = 8
+
+# ========== Plotter ==========
+class Plotter(object):
+    def __init__(self):
+        self.q_eval = []
+        self.q_eval_steps = []
+        self.limit = 1000000
+        self.size = 0
+        plt.ion()
+        plt.plot(self.q_eval_steps, self.q_eval, color = 'red')
+        plt.xlabel('Step')
+        plt.ylabel('Qvalue')
+        plt.title('Qvalue over time')
+
+    def add_q_eval(self, q, t):
+        self.size += 1
+        self.q_eval.append(q)
+        self.q_eval_steps.append(t)
+        if self.size > self.limit:
+            self.size -= 1
+            del self.q_eval[0]
+            del self.q_eval_steps[0]
+
+    def observe_q_eval(self):
+        plt.plot(self.q_eval_steps, self.q_eval, color = 'red')
+        plt.xlim(min(self.q_eval_steps), max(self.q_eval_steps))
+        plt.ylim(min(self.q_eval), max(self.q_eval))
+        plt.draw()
+        plt.pause(0.001)
 
 # ========== Memo =============
 class Memo(object):
@@ -54,24 +83,22 @@ class Memory(object):
             self.buffer[index] = memo
 
     def sample(self, size):
-        sample_size = min(self.size, self.buffer_size)
+        sample_size = min(size, self.buffer_size)
         sample_indexes = np.random.choice(
             sample_size,
-            size = min(sample_size, size)
+            size = sample_size
         )
-        sample = [self.buffer[i] for i in sample_indexes]
 
-        s = np.array([memo.s for memo in sample])
-        a = np.array([memo.a for memo in sample])
-        r = np.array([memo.r for memo in sample])
-        s_ = np.array([memo.s_ for memo in sample])
+        s = np.array([self.buffer[i].s for i in sample_indexes])
+        a = np.array([self.buffer[i].a for i in sample_indexes])
+        r = np.array([self.buffer[i].r for i in sample_indexes])
+        s_ = np.array([self.buffer[i].s_ for i in sample_indexes])
 
         return s, a, r, s_
 
 # Deep QNetwork
 class DQN(object):
-    def __init__(self, h_size, name, is_summary = False):
-        self.is_summary = is_summary
+    def __init__(self, h_size, name):
         with tf.variable_scope(name):
             self.image_in = tf.placeholder(
                 name = 'ImageInput',
@@ -196,6 +223,7 @@ class DQN(object):
 class DDDQN(object):
     def __init__(self, load = False):
         self.is_ai = False
+        self.plotter = Plotter()
 
         with tf.variable_scope('DDDQN'):
             self.main_qn = DQN(H_SIZE, 'MainDQN')
@@ -297,6 +325,11 @@ class DDDQN(object):
                     }
                 )
 
+                # Update loss graph
+                self.plotter.add_q_eval(np.mean(q1), self.global_step)
+                self.plotter.observe_q_eval()
+
+                # Update the second network wieghts
                 self._update_target(self.target_replace, self.sess)
 
             if self.global_step % SAVE_STEP == 0 and self.global_step != 0:
