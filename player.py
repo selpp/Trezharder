@@ -1,18 +1,15 @@
 from data_manager import DataManager, SpriteSheetInfos
 from animation import Animation, Animator
 from monobehaviour import MonoBehaviour
-#from fsm import State, FSM
 from vector import Vector
 from collider import BoxCollider
 from game_engine import GameEngineTools
 from fsm import State, FSM
 import pygame
-from pygame import Rect
-import pygame
-from pygame import Rect
-# ===================================================
-# HUMANPLAYERFSM
+from pygame import Rect, transform
 
+# ===================================================
+# PLAYERFSM
 
 class PlayerFSM(FSM):
 	def __init__(self):
@@ -47,7 +44,7 @@ class PlayerStateWalkRunState(State):
 		self.animation_speed = 1
 		self.animation_speed_factor = 1.5
 		player.animator.set_animation('DOWN')
-	
+
 	def get_direction(self, player):
 		move_x, move_y = 0, 0
 
@@ -89,7 +86,7 @@ class PlayerStateWalkRunState(State):
 		elif player.velocity.y > 0:
 			player.animator.set_animation('DOWN')
 
-	def update(self, dt, player): 
+	def update(self, dt, player):
 		self.get_direction(player)
 		self.set_all_speeds(player)
 		self.set_animations(player)
@@ -100,7 +97,7 @@ class PlayerStateWalkRunState(State):
 
 	def exit(self, player):
 		return PlayerStateIdle(player)
-		
+
 	def __str__(self):
 		return 'Player State: Walk/Run'
 
@@ -128,7 +125,7 @@ class PlayerStateIdle(State):
 		elif current_animation_id == 'RIGHT':
 			player.animator.set_animation('IDLE_RIGHT')
 
-	def update(self, dt, player): 
+	def update(self, dt, player):
 		if player.command.up or player.command.down or player.command.left or player.command.right:
 			self.does_exit = True
 
@@ -141,7 +138,7 @@ class PlayerStateIdle(State):
 	def __str__(self):
 		return 'Player State: Idle'
 
-		
+
 class  PlayerStateExplode(State):
 	def __init__(self, player):
 		self.does_exit = False
@@ -165,20 +162,20 @@ class  PlayerStateExplode(State):
 		pass
 
 	def exit(self, player):
-		return BotDeathState(player)
+		return PlayerDeathState(player)
 
 	def __str__(self):
 		return 'Bot State: Explode'
-		
 
-class  BotDeathState(State):
+
+class  PlayerDeathState(State):
 	def __init__(self, player):
 		self.does_exit = False
 		self.enter(player)
 
 	def enter(self, player):
 		GameEngineTools.DestroyObject(player.gameobject)
-		
+
 	def update(self, dt, player):
 		pass
 
@@ -192,7 +189,7 @@ class  BotDeathState(State):
 		return 'Bot State: RIP'
 
 # ===================================================
-# BOT
+# PLAYER
 
 class Player(MonoBehaviour):
 	def __init__(self,command,color,ennemies_name=''):
@@ -202,7 +199,7 @@ class Player(MonoBehaviour):
 		self.ennemies_name = ennemies_name
 
 	def start(self):
-		# ================= State Machine =========================  
+		# ================= State Machine =========================
 		self.state_machine = PlayerFSM()
 		self.ennemies = GameEngineTools.find_all(self.ennemies_name)
 		self.rip = False
@@ -211,11 +208,13 @@ class Player(MonoBehaviour):
 		self.transform.get_scale().x = 100
 		self.transform.get_scale().y = 100
 		self.transform.tag = 'player'
-		self.velocity = Vector(0.0, 0.0)  
-		self.explode = False  
+		self.velocity = Vector(0.0, 0.0)
+		self.explode = False
 
 		# ================= Collider ==========================
-		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3) , self.gameobject))
+		box_scale = Vector(0.3, 0.3)
+		box_translation = Vector(0.0, 25.0)
+		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, box_translation, box_scale, self.gameobject))
 
 		# ================= Animator ==========================
 		self.animator = Animator()
@@ -229,7 +228,7 @@ class Player(MonoBehaviour):
 		else:
 			data_manager.load_sprite_sheet('TRUMP2', 'TEST2.png', infos)
 			spriteSheet = data_manager.get_sprite_sheet('TRUMP2')
-		duration = 0.6      
+		duration = 0.6
 		a_down = Animation(spriteSheet, [(i, 0) for i in range(6)], duration, 1, loop = True)
 		a_right = Animation(spriteSheet, [(i, 1) for i in range(6)], duration, 1, loop = True)
 		a_up = Animation(spriteSheet, [(i, 2) for i in range(6)], duration, 1, loop = True)
@@ -247,7 +246,7 @@ class Player(MonoBehaviour):
 		self.animator.add_animation('IDLE_RIGHT', a_idle_right)
 		self.animator.add_animation('IDLE_UP', a_idle_up)
 		self.animator.add_animation('IDLE_LEFT', a_idle_left)
-  
+
 		scale = Vector(128.0, 128.0)
 		infos = SpriteSheetInfos(4, 4, (scale.x, scale.y))
 		data_manager = DataManager.get_instance()
@@ -263,7 +262,10 @@ class Player(MonoBehaviour):
 		# data_manager.load_sound('EXPLODE', 'EXPLODE.wav')
 
 		self.state_machine.state = PlayerStateIdle(self)
-		
+
+		# Params
+		self.range = 50.0
+
 	def update(self, dt):
 		self.animator.update(dt)
 		self.state_machine.update(dt, self)
@@ -273,9 +275,9 @@ class Player(MonoBehaviour):
 		self.state_machine.fixed_update(fixed_dt, self)
 		if self.rip:
 			return
-			
+
 		self.command.update_command()
-  
+
 		if self.command.B:
 			self.try_kill()
 
@@ -283,27 +285,52 @@ class Player(MonoBehaviour):
 		for ennemy in self.ennemies:
 			if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
 				continue
-			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < 50.0:
+			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < self.range:
 					ennemy.get_mono(Player).die()
 					self.murderer = True
-			  
+
 	def die(self):
 		self.rip = True
 		self.state_machine.state = PlayerStateExplode(self)
-		
-	def draw(self, screen):
-		scale = self.transform.get_scale() / 2.0
-		draw_pos = self.transform.get_position() - scale
-		screen.blit(self.animator.current_sprite, (draw_pos.x, draw_pos.y))
 
-	def draw_ai(self, screen):
-		scale = self.transform.get_scale() / 2.0
-		draw_pos = self.transform.get_position() - scale
-		color = (0, 255, 0) if self.color == 0 else (255, 0, 0)
-		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
-		
+	def draw(self, screen):
+		scale = self.transform.get_scale()
+		scale_half = scale / 2.0
+		draw_pos = self.transform.get_position() - scale_half
+		resized = transform.scale(self.animator.current_sprite, (scale.x, scale.y))
+		screen.blit(resized, (draw_pos.x, draw_pos.y))
+
+	def draw_collision_vision(self, screen):
+		if self.rip or self.color == 1:
+			return
+		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
+		color = (120, 120, 120)
+		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
+	def draw_player_vision(self, screen):
+		if self.rip or self.color == 0:
+			return
+		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
+		color = (255, 255, 255)
+		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
+	def draw_range_vision(self, screen):
+		if self.rip or self.color == 0:
+			return
+		pos = self.transform.get_position()
+		half_range = self.range / 2.0
+		color = (255, 255, 255)
+		pygame.draw.circle(screen, color, (int(pos.x), int(pos.y)), int(self.range))
+
+	def draw_feature_map(self, id):
+		if not id in DataManager.get_instance().feature_maps:
+			return
+		if id == 'COLLISIONS':
+			self.draw_collision_vision(DataManager.instance.feature_maps[id])
+		elif id == 'PLAYER':
+			self.draw_player_vision(DataManager.instance.feature_maps[id])
+		elif id == 'RANGE':
+			self.draw_range_vision(DataManager.instance.feature_maps[id])
 
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)
-	
-	

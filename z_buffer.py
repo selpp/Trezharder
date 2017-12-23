@@ -1,4 +1,5 @@
 # Z Buffer
+from data_manager import DataManager
 
 # ===================================================
 # ZELEMENT
@@ -13,8 +14,9 @@ class ZElement(object):
 	def draw(self, screen):
 		self.value.draw(screen)
 
-	def draw_ai(self, screen):
-		self.value.draw_ai(screen)
+	def draw_feature_map(self, id):
+		if getattr(self.value, 'draw_feature_map', None):
+			self.value.draw_feature_map(id)
 
 # ===================================================
 # ZLIST
@@ -34,10 +36,9 @@ class ZList(object):
 		for element in self.content:
 			element.draw(screen)
 
-	def draw_ai(self, screen):
-		self.content.sort(key = lambda x:x.value.transform.get_position().y)
+	def draw_feature_map(self, id):
 		for element in self.content:
-			element.draw_ai(screen)
+			element.draw_feature_map(id)
 
 # ===================================================
 # ZBUFFER
@@ -58,13 +59,12 @@ class ZBuffer(object):
 		z_list.insert(value)
 		self.z_lists.append(z_list)
 
-
 	def draw(self, screen):
 		self.z_lists.sort(key = lambda x: x.z_index)
 		for z_list in self.z_lists:
 			z_list.draw(screen)
 
-	def draw_ai(self, screen):
-		self.z_lists.sort(key = lambda x: x.z_index)
-		for z_list in self.z_lists:
-			z_list.draw_ai(screen)
+	def draw_feature_map(self, id):
+		if id in DataManager.get_instance().feature_maps:
+			for z_list in self.z_lists:
+				z_list.draw_feature_map(id)
