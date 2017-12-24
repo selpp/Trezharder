@@ -36,6 +36,7 @@ class DeepPlayerCommand(BotPlayerCommand):
         self.vector_to_command(self.action_vector)
         if self.has_played:
             GameEngineTools.instance.model.store(self.prev, self.old_action.index(1), self.rc.r, curr)
+            GameEngineTools.instance.model.total_reward += self.rc.r
         GameEngineTools.instance.model.training_step()
 
         print('==================== AI ======================')
@@ -58,6 +59,8 @@ class DeepPlayerCommand(BotPlayerCommand):
         print('Reward: ' + str(self.rc.r))
         print('Epsilon: ' + str(GameEngineTools.instance.model.e))
         print('Step: ' + str(GameEngineTools.instance.model.global_step))
+        print('Episode: ' + str(GameEngineTools.instance.model.episode))
+        print('TotalReward: ' + str(GameEngineTools.instance.model.total_reward))
         print('Memory full: ' + full)
 
     def print_action(self):

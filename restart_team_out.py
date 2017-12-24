@@ -12,6 +12,8 @@ class RestartTeamOut(MonoBehaviour):
 
 	def fixed_update(self,fdt):
 		if self.should_restart():
+			GameEngineTools.instance.model.episode += 1
+			GameEngineTools.instance.model.total_reward = 0
 			SceneManager.restart()
 
 	def should_restart(self):

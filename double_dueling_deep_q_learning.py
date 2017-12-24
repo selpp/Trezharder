@@ -19,43 +19,44 @@ H_SIZE = 512
 
 LEARNING_RATE = 25e-5
 BATCH = 32
+TRAING_EPOCHS = 5
 
-EPISODE_START = 1e5
+EPISODE_START = 120
 E_GREEDY = 1.0
 REWARD_DECAY = 0.99
-EXPLORATION = 1e5
+EXPLORATION = 1000
 
 TAU = 1e-3
-MEMORY_SIZE = int(1e5)
+MEMORY_SIZE = int(0.5e5)
 
 UPDATE_FREQUENCY = 8
+TRAINING_FREQUENCY = 4
 
 # ========== Plotter ==========
 class Plotter(object):
     def __init__(self):
         self.q_eval = []
-        self.q_eval_steps = []
-        self.limit = 1000000
+        self.reward = []
+        self.steps = []
         self.size = 0
         plt.ion()
-        plt.plot(self.q_eval_steps, self.q_eval, color = 'red')
-        plt.xlabel('Step')
-        plt.ylabel('Qvalue')
-        plt.title('Qvalue over time')
+        plt.plot(self.steps, self.q_eval, label = 'Average Qvalue')
+        plt.plot(self.steps, self.reward, label = 'Total Reward')
+        plt.xlabel('Episode')
+        plt.title('Qvalue & Rward over Time')
+        plt.legend(borderaxespad = 0.)
 
-    def add_q_eval(self, q, t):
+    def add(self, q, r, t):
         self.size += 1
         self.q_eval.append(q)
-        self.q_eval_steps.append(t)
-        if self.size > self.limit:
-            self.size -= 1
-            del self.q_eval[0]
-            del self.q_eval_steps[0]
+        self.reward.append(r)
+        self.steps.append(t)
 
-    def observe_q_eval(self):
-        plt.plot(self.q_eval_steps, self.q_eval, color = 'red')
-        plt.xlim(min(self.q_eval_steps), max(self.q_eval_steps))
-        plt.ylim(min(self.q_eval), max(self.q_eval))
+    def observe(self):
+        plt.plot(self.steps, self.q_eval, label = 'Average Qvalue')
+        plt.plot(self.steps, self.reward, label = 'Total Reward')
+        plt.xlim(min(self.steps), max(self.steps))
+        plt.ylim(min(min(self.q_eval), min(self.reward)), max(max(self.q_eval), max(self.reward)))
         plt.draw()
         plt.pause(0.001)
 
@@ -74,6 +75,9 @@ class Memory(object):
         self.buffer_size = 0
         self.buffer = []
 
+        self.epoch_end = True
+        self.batch_indexes = []
+
     def store(self, memo):
         if self.buffer_size < self.size:
             self.buffer_size += 1
@@ -82,17 +86,26 @@ class Memory(object):
             index = random.randint(0, self.size - 1)
             self.buffer[index] = memo
 
-    def sample(self, size):
-        sample_size = min(size, self.buffer_size)
-        sample_indexes = np.random.choice(
-            sample_size,
-            size = sample_size
-        )
+    def batch(self, size):
+        if self.epoch_end:
+            self.epoch_end = False
+            self.batch_indexes = [i for i in range(self.size - 1)]
 
-        s = np.array([self.buffer[i].s for i in sample_indexes])
-        a = np.array([self.buffer[i].a for i in sample_indexes])
-        r = np.array([self.buffer[i].r for i in sample_indexes])
-        s_ = np.array([self.buffer[i].s_ for i in sample_indexes])
+        sample_size = min(size, len(self.batch_indexes))
+        indexes = np.random.choice(
+            self.batch_indexes,
+            size = sample_size,
+            replace = False
+        )
+        for index in indexes:
+            self.batch_indexes.remove(index)
+        if len(self.batch_indexes) <= 0:
+            self.epoch_end = True
+
+        s = np.array([self.buffer[i].s for i in indexes])
+        a = np.array([self.buffer[i].a for i in indexes])
+        r = np.array([self.buffer[i].r for i in indexes])
+        s_ = np.array([self.buffer[i].s_ for i in indexes])
 
         return s, a, r, s_
 
@@ -250,6 +263,9 @@ class DDDQN(object):
             )
 
             self.global_step = 0
+            self.episode = 0
+            self.episode_trained = False
+            self.total_reward = 0
 
         self.sess.run(self.init)
         if load:
@@ -292,48 +308,67 @@ class DDDQN(object):
 
         return a
 
+    def update_training_variables(self):
+        self.episode += 1
+        self.total_reward = 0
+        self.episode_trained = False
+
     def training_step(self):
         self.global_step += 1
-        if self.global_step > EPISODE_START:
-            self.e = self.e - self.e_factor if self.e > 0.1 else 0.1
 
-            if self.global_step % UPDATE_FREQUENCY == 0 and self.global_step != 0:
-                batch_s, batch_a, batch_r, batch_s_ = self.memory.sample(BATCH)
+        if self.episode > EPISODE_START:
 
-                q1 = self.sess.run(
-                    self.main_qn.predict,
-                    feed_dict = {
-                        self.main_qn.image_in: batch_s_
-                    }
-                )
-                q2 = self.sess.run(
-                    self.target_qn.q_out,
-                    feed_dict = {
-                        self.target_qn.image_in: batch_s_
-                    }
-                )
+            if not self.episode_trained and (self.episode - EPISODE_START) % TRAINING_FREQUENCY == 0:
+                self.episode_trained = True
+                self.e = self.e - self.e_factor if self.e > 0.1 else 0.1
 
-                double_q = q2[range(BATCH), q1]
-                target_q = batch_r + (REWARD_DECAY * double_q)
+                for epoch in range(TRAING_EPOCHS):
+                    epoch_end = False
+                    i = 1
 
-                _ = self.sess.run(
-                    self.main_qn.update,
-                    feed_dict = {
-                        self.main_qn.image_in: batch_s,
-                        self.main_qn.q_target: target_q,
-                        self.main_qn.actions: batch_a
-                    }
-                )
+                    while not epoch_end:
+                        batch_s, batch_a, batch_r, batch_s_ = self.memory.batch(BATCH)
+                        size = batch_s.shape[0]
 
-                # Update loss graph
-                self.plotter.add_q_eval(np.mean(q1), self.global_step)
-                self.plotter.observe_q_eval()
+                        q1 = self.sess.run(
+                            self.main_qn.predict,
+                            feed_dict = {
+                                self.main_qn.image_in: batch_s_
+                            }
+                        )
+                        q2 = self.sess.run(
+                            self.target_qn.q_out,
+                            feed_dict = {
+                                self.target_qn.image_in: batch_s_
+                            }
+                        )
+
+                        double_q = q2[range(size), q1]
+                        target_q = batch_r + (REWARD_DECAY * double_q)
+
+                        _, loss = self.sess.run(
+                            [self.main_qn.update, self.main_qn.loss],
+                            feed_dict = {
+                                self.main_qn.image_in: batch_s,
+                                self.main_qn.q_target: target_q,
+                                self.main_qn.actions: batch_a
+                            }
+                        )
+
+                        epoch_end = self.memory.epoch_end
+                        i += 1
+
+                    print('Epoch: ' + str(epoch) + ' Loss: ' + str(loss) + ' Qvalue: ' + str(np.mean(q1)))
+
+                # Update Eval Graph
+                self.plotter.add(np.mean(q1), self.total_reward, self.episode)
+                self.plotter.observe()
 
                 # Update the second network wieghts
                 self._update_target(self.target_replace, self.sess)
 
-            if self.global_step % SAVE_STEP == 0 and self.global_step != 0:
-                self.saver.save(
-                    self.sess,
-                    SAVE_PATH + 'model-' + str(self.global_step) + '.ckpt'
-                )
+        if self.global_step % SAVE_STEP == 0 and self.global_step != 0:
+            self.saver.save(
+                self.sess,
+                SAVE_PATH + 'model-' + str(self.global_step) + '.ckpt'
+            )
