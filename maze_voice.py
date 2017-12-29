@@ -1,9 +1,9 @@
 from monobehaviour import MonoBehaviour
 
 class MazeVoice(MonoBehaviour):
-    def __init__(self):
+    def __init__(self,notify_time = 5.0):
         MonoBehaviour.__init__(self)
-        self.notify_time = 5.0
+        self.notify_time = notify_time
         self.listeners = []
     
     def start(self):
@@ -15,9 +15,8 @@ class MazeVoice(MonoBehaviour):
     def notify_dispatch_weapon(self):
         remove_list = []
         for listener in self.listeners:
-            if listener.gameobject.is_alive:
-                listener.on_notify('dispatch')
-            else:
+            listener.on_notify('dispatch')
+            if isinstance(listener,MonoBehaviour) and not listener.gameobject.is_alive:
                 remove_list.append(listener)
         for remove_listener in remove_list:
             self.listeners.remove(remove_listener)

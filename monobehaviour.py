@@ -7,6 +7,7 @@ class MonoBehaviour(object):
 	__metaclass__ = ABCMeta
      
 	def __init__(self,z_index=0):
+         self.gameobject = None 
          self.z_index = z_index
          
 	def bind_gameobject(self,gameobject):

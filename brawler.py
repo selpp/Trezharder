@@ -75,5 +75,5 @@ class Brawler(Player):
             
     def on_notify(self,message):
         if message == 'dispatch':
-            print('weapon should be dispatch')
+            self.weapons = []
             

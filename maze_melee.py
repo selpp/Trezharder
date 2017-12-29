@@ -12,6 +12,8 @@ import random
 from maze_generator import MazeGenerator 
 from weapon import Weapon
 from maze_voice import MazeVoice
+from memory_random_spawner import MemoryRandomSpawner
+from weapon_shuffler import WeaponShuffler
 
 class MazeMelee(Scene):
     def __init__(self):
@@ -36,7 +38,7 @@ class MazeMelee(Scene):
         
         self.players_rnd = []
         
-        spawns = spawner.spawn(self.nb_players + self.nb_weapons,map)
+        spawns = spawner.spawn(self.nb_players + 1,map)
         for i in range(self.nb_players):
             player_rnd = Gameobject('player',Rigidbody(),tag = 'player')
             if i == self.nb_players - 1:
@@ -48,14 +50,18 @@ class MazeMelee(Scene):
             player_rnd.transform.get_position().y = my_spawn[0] * 100.0 + 50.0
             gameobjects.append(player_rnd)
             maze_voice.add_listener(player_rnd.get_mono(Brawler))
+            
+        goal = GameObject('goal',Rigidbody(),tag = 'goal')
+        my_spawn = spawns.pop(random.randint(0,len(spawns) - 1))
+        goal.transform.get_position().x = my_spawn[1] * 100.0 + 50.0
+        goal.transform.get_position().y = my_spawn[0] * 100.0 + 50.0
+        #The goal have a random pos but it need a mono to define the visual aspect of the goal as well as a collider
         
+        ws = WeaponShuffler(map)
         for i in range(self.nb_weapons):
-            weapon = Gameobject('weapon',Rigidbody(),tag = 'weapon')
-            weapon.add_mono([Weapon()])
-            my_spawn = spawns.pop(random.randint(0,len(spawns) - 1))
-            weapon.transform.get_position().x = my_spawn[1] * 100.0 + 50.0
-            weapon.transform.get_position().y = my_spawn[0] * 100.0 + 50.0
-            gameobjects.append(weapon)
+            ws.add_weapon(Weapon())
+        ws.shuffle()
+        maze_voice.add_listener(ws)
 
         restart_rule = Gameobject('')
         restart_rule.add_mono([RestartTimeOut(10.0)])
