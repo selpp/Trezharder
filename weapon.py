@@ -9,7 +9,7 @@ from vector import Vector
 
 class Weapon(MonoBehaviour):
     def __init__(self):
-        MonoBehaviour.__init__(self,1)
+        MonoBehaviour.__init__(self,2)
         
     def start(self):
         self.power = rnd.randint(1,10)

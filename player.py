@@ -193,7 +193,7 @@ class  PlayerDeathState(State):
 
 class Player(MonoBehaviour):
 	def __init__(self,command,color,ennemies_name=''):
-		MonoBehaviour.__init__(self,1)
+		MonoBehaviour.__init__(self,2)
 		self.command = command
 		self.color = color
 		self.ennemies_name = ennemies_name
