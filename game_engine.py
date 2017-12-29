@@ -7,7 +7,7 @@ from z_buffer import ZBuffer
 from pygame import image, surfarray, Surface
 from PIL import Image
 import numpy as np
-from double_dueling_deep_q_learning import DDDQN
+#from model_1 import DeepQModel
 
 class GameEngine:
     def __init__(self):
@@ -40,8 +40,8 @@ class GameEngine:
 
         font.init()
         self.fps_font = font.SysFont("monospace", 20)
-        self.time_scale = 5.0
-
+        self.time_scale = 1.0
+        
     def init_graphics(self):
         self.data_manager = DataManager.get_instance()
         self.z_buffer = ZBuffer()
@@ -171,17 +171,10 @@ class GameEngineTools(object):
     def __init__(self,ge):
         self.ge = ge
         ge.pause_timers()
-
-        self.deep_width = 64
-        self.deep_height = 64
-        self.model = DDDQN()
-
-        self.current_feature_maps = {}
-
-        DataManager.get_instance().add_feature_map('COLLISIONS', self.ge.width, self.ge.height)
-        DataManager.get_instance().add_feature_map('PLAYER', self.ge.width, self.ge.height)
-        DataManager.get_instance().add_feature_map('RANGE', self.ge.width, self.ge.height)
-
+        self.deep_width = 84
+        self.deep_height = 84
+        #self.model = DeepQModel(width = self.deep_width, height = self.deep_height)
+        self.current_screen_ai = None
         ge.restart_timers()
         GameEngineTools.instance = self
 

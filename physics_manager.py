@@ -47,11 +47,12 @@ class PhysicsManager(object):
         
     def call_on_trigger(self):
         for collision in self.trigger_collision:
-            pass
+            collision[0].gameobject.on_collision(collision[1])
+            collision[1].gameobject.on_collision(collision[0])
         
     def trigger_update(self):
         for current_collision in self.trigger_collision:
-            if not current_collision[0].try_collision(current_collision[1]):
+            if not current_collision[0].gameobject.is_alive or not current_collision[1].gameobject.is_alive or not current_collision[0].try_collision(current_collision[1]):
                 self.trigger_collision.remove(current_collision)
                 current_collision[0].set_on_collision(False)
                 current_collision[1].set_on_collision(False)

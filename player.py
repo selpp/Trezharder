@@ -212,10 +212,7 @@ class Player(MonoBehaviour):
 		self.explode = False
 
 		# ================= Collider ==========================
-		box_scale = Vector(0.3, 0.3)
-		box_translation = Vector(0.0, 25.0)
-		self.gameobject.rigidbody.set_collider(BoxCollider(None , self.transform, box_translation, box_scale, self.gameobject))
-
+		self.gameobject.rigidbody.set_collider(BoxCollider(self.transform, Vector(0.0, 25.0), Vector(0.3, 0.3) , self.gameobject))
 		# ================= Animator ==========================
 		self.animator = Animator()
 
