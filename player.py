@@ -322,6 +322,13 @@ class Player(MonoBehaviour):
 		color = (255, 255, 255)
 		pygame.draw.circle(screen, color, (int(pos.x), int(pos.y)), int(self.range))
 
+	def draw_simplified(self, screen):
+		if self.rip:
+			return
+		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
+		color = (60, 60, 60) if self.color == 1 else (120, 120, 120)
+		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+
 	def draw_feature_map(self, id):
 		if not id in DataManager.get_instance().feature_maps:
 			return
@@ -331,6 +338,8 @@ class Player(MonoBehaviour):
 			self.draw_player_vision(DataManager.instance.feature_maps[id])
 		elif id == 'RANGE':
 			self.draw_range_vision(DataManager.instance.feature_maps[id])
+		elif id == 'SIMPLIFIED':
+			self.draw_simplified(DataManager.instance.feature_maps[id])
 
 	def z_buff(self, z_index, z_buffer):
 		z_buffer.insert(z_index, self)

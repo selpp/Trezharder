@@ -32,9 +32,17 @@ class TileMap(object):
 		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
 
-	def draw_feature_map(self, a):
-		if a == 'COLLISIONS':
-			self.draw_collision_vision(DataManager.get_instance().feature_maps[a])
+	def draw_simplified(self, screen):
+		scale = self.transform.get_scale() / 2.0
+		draw_pos = self.transform.get_position() - scale
+		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
+		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
+
+	def draw_feature_map(self, id):
+		if id == 'COLLISIONS':
+			self.draw_collision_vision(DataManager.get_instance().feature_maps[id])
+		elif id == 'SIMPLIFIED':
+			self.draw_simplified(DataManager.get_instance().feature_maps[id])
 
 	def draw_debug(self, screen):
 		if self.collider is not None:

@@ -31,8 +31,10 @@ class ZList(object):
 		element = ZElement(value)
 		self.content.append(element)
 
-	def draw(self, screen):
+	def update(self):
 		self.content.sort(key = lambda x:x.value.transform.get_position().y)
+
+	def draw(self, screen):
 		for element in self.content:
 			element.draw(screen)
 
@@ -59,8 +61,12 @@ class ZBuffer(object):
 		z_list.insert(value)
 		self.z_lists.append(z_list)
 
-	def draw(self, screen):
+	def update(self):
 		self.z_lists.sort(key = lambda x: x.z_index)
+		for z_list in self.z_lists:
+			z_list.update()
+
+	def draw(self, screen):
 		for z_list in self.z_lists:
 			z_list.draw(screen)
 

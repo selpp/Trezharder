@@ -7,7 +7,7 @@ from z_buffer import ZBuffer
 from pygame import image, surfarray, Surface
 from PIL import Image
 import numpy as np
-from double_dueling_deep_q_learning import DDDQN
+from double_dueling_deep_q_learning import DDDQN, WIDTH, HEIGHT
 
 class GameEngine:
     def __init__(self):
@@ -40,7 +40,7 @@ class GameEngine:
 
         font.init()
         self.fps_font = font.SysFont("monospace", 20)
-        self.time_scale = 5.0
+        self.time_scale = 10.0
 
     def init_graphics(self):
         self.data_manager = DataManager.get_instance()
@@ -127,17 +127,23 @@ class GameEngine:
 
             self.update(dt)
 
+            # Modes
+            if InputManager.get_instance().is_key_down('DEEP_MODE'):
+                GameEngineTools.set_learning_mode(not GameEngineTools.get_learning_mode())
+
             # Screen
+            training_mode = GameEngineTools.get_learning_mode()
             self.screen.fill(self.BLACK)
             self.screen_ai.fill(self.BLACK)
-            self.z_buffer.draw(self.screen)
-            # feature maps
-            self.ai_view_mode(True)
+            self.z_buffer.update()
+            if not training_mode:
+                self.z_buffer.draw(self.screen)
+            else:
+                self.ai_view_mode()
             self.show_debug()
-
             display.flip()
 
-    def ai_view_mode(self, is_activated = False):
+    def ai_view_mode(self):
         i = 0
         for id, feature_map in self.data_manager.feature_maps.iteritems():
             i += 1
@@ -145,13 +151,6 @@ class GameEngine:
             feature_map.fill(self.BLACK)
             self.z_buffer.draw_feature_map(id)
             self.draw_feature_map(id, i)
-
-    def draw_screen_ai(self):
-        if GameEngineTools.get_current_screen_ai() is not None:
-            w, _ = GameEngineTools.get_screen_ai_size()
-            ai_screen = GameEngineTools.get_current_screen_ai()
-            ai_debug = surfarray.make_surface(np.stack([ai_screen, ai_screen, ai_screen], axis = 2))
-            self.screen.blit(ai_debug, (self.width - w, 0))
 
     def draw_feature_map(self, id, n):
         cfr = GameEngineTools.get_current_feature_map(id)
@@ -172,15 +171,17 @@ class GameEngineTools(object):
         self.ge = ge
         ge.pause_timers()
 
-        self.deep_width = 64
-        self.deep_height = 64
+        self.deep_width = WIDTH
+        self.deep_height = HEIGHT
         self.model = DDDQN()
+        self.learning_mode = False
 
         self.current_feature_maps = {}
 
-        DataManager.get_instance().add_feature_map('COLLISIONS', self.ge.width, self.ge.height)
-        DataManager.get_instance().add_feature_map('PLAYER', self.ge.width, self.ge.height)
-        DataManager.get_instance().add_feature_map('RANGE', self.ge.width, self.ge.height)
+        # DataManager.get_instance().add_feature_map('COLLISIONS', self.ge.width, self.ge.height)
+        # DataManager.get_instance().add_feature_map('PLAYER', self.ge.width, self.ge.height)
+        # DataManager.get_instance().add_feature_map('RANGE', self.ge.width, self.ge.height)
+        DataManager.get_instance().add_feature_map('SIMPLIFIED', self.ge.width, self.ge.height)
 
         ge.restart_timers()
         GameEngineTools.instance = self
@@ -190,6 +191,14 @@ class GameEngineTools(object):
     @staticmethod
     def get_model():
         return GameEngineTools.instance.model
+
+    @staticmethod
+    def get_learning_mode():
+        return GameEngineTools.instance.learning_mode
+
+    @staticmethod
+    def set_learning_mode(b):
+        GameEngineTools.instance.learning_mode = b
 
     @staticmethod
     def get_screen_size():

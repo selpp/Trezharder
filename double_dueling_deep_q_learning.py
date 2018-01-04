@@ -3,60 +3,110 @@ import tensorflow.contrib.slim as slim
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import sys
+
+from matplotlib.gridspec import GridSpec
 
 # ========== Params =============
 SUMMARY_STEP = 30
 SUMMARY_PATH = 'logs/'
 
-SAVE_STEP = 1000
+SAVE_STEP = 1e3
 SAVE_PATH = 'checkpoints/'
 
 ACTIONS = 6
 WIDTH = 64
 HEIGHT = 64
-CHANNELS = 3
+IMAGE_BUFFER_SIZE = 4
+CHANNELS = IMAGE_BUFFER_SIZE#3
 H_SIZE = 512
 
-LEARNING_RATE = 25e-5
+LEARNING_RATE = 1e-6
 BATCH = 32
-TRAING_EPOCHS = 5
 
-EPISODE_START = 120
+EPISODE_START = 100
 E_GREEDY = 1.0
+E_GREEDY_MIN = 0.05
 REWARD_DECAY = 0.99
 EXPLORATION = 1000
 
-TAU = 1e-3
-MEMORY_SIZE = int(0.5e5)
+MEMORY_SIZE = 50000
 
-UPDATE_FREQUENCY = 8
-TRAINING_FREQUENCY = 4
+UPDATE_FREQUENCY = 4
+
+TRAINING_FREQUENCY = 1
+TARGET_UPDATE_FREQUENCE = 100
 
 # ========== Plotter ==========
 class Plotter(object):
     def __init__(self):
-        self.q_eval = []
+        self.q_eval_max = []
+        self.q_eval_avg = []
+        self.q_eval_min = []
         self.reward = []
+        self.epsilon = []
+        self.loss = []
         self.steps = []
         self.size = 0
-        plt.ion()
-        plt.plot(self.steps, self.q_eval, label = 'Average Qvalue')
-        plt.plot(self.steps, self.reward, label = 'Total Reward')
-        plt.xlabel('Episode')
-        plt.title('Qvalue & Rward over Time')
-        plt.legend(borderaxespad = 0.)
 
-    def add(self, q, r, t):
+        plt.ion()
+        self.fig = plt.figure('DashBoard')
+        self.fig.suptitle('Values through Episodes')
+
+        self.gs = GridSpec(3, 3)
+
+        self.total_reward_ax = plt.subplot(self.gs[0, :])
+        self.total_reward_ax.plot(self.steps, self.reward, color = 'orange')
+        self.total_reward_ax.set_ylabel('Total Reward')
+
+        self.q_eval_ax = plt.subplot(self.gs[1, :])
+        self.q_eval_ax.plot(self.steps, self.q_eval_max, color = 'blue')
+        self.q_eval_ax.plot(self.steps, self.q_eval_avg, color = 'cyan')
+        self.q_eval_ax.plot(self.steps, self.q_eval_min, color = 'grey')
+        self.q_eval_ax.set_ylabel('Qeval')
+
+        self.epsilon_ax = plt.subplot(self.gs[2, -1])
+        self.epsilon_ax.plot(self.steps, self.epsilon, color = 'magenta')
+        self.epsilon_ax.set_ylabel('Epsilon')
+
+        self.loss_ax = plt.subplot(self.gs[2, :-1])
+        self.loss_ax.plot(self.steps, self.loss, color = 'red')
+        self.loss_ax.set_ylabel('Loss')
+
+        self.gs.tight_layout(self.fig, h_pad=0.5)
+
+    def add(self, q_max, q_avg, q_min, r, e, l, t):
         self.size += 1
-        self.q_eval.append(q)
+        self.q_eval_max.append(q_max)
+        self.q_eval_avg.append(q_avg)
+        self.q_eval_min.append(q_min)
         self.reward.append(r)
+        self.epsilon.append(e)
+        self.loss.append(l)
         self.steps.append(t)
 
     def observe(self):
-        plt.plot(self.steps, self.q_eval, label = 'Average Qvalue')
-        plt.plot(self.steps, self.reward, label = 'Total Reward')
-        plt.xlim(min(self.steps), max(self.steps))
-        plt.ylim(min(min(self.q_eval), min(self.reward)), max(max(self.q_eval), max(self.reward)))
+        min_steps, max_steps = min(self.steps), max(self.steps)
+
+        self.total_reward_ax.plot(self.steps, self.reward, color = 'orange')
+        self.total_reward_ax.set_xlim(min_steps, max_steps)
+        self.total_reward_ax.set_ylim(min(self.reward) - 2, max(self.reward) + 2)
+
+        self.q_eval_ax.plot(self.steps, self.q_eval_max, color = 'blue')
+        self.q_eval_ax.plot(self.steps, self.q_eval_avg, color = 'cyan')
+        self.q_eval_ax.plot(self.steps, self.q_eval_min, color = 'grey')
+        self.q_eval_ax.set_xlim(min_steps, max_steps)
+        min_q, max_q = min(min(self.q_eval_max), min(self.q_eval_avg), min(self.q_eval_min)), max(max(self.q_eval_max), max(self.q_eval_avg), max(self.q_eval_min))
+        self.q_eval_ax.set_ylim(min_q, max_q)
+
+        self.epsilon_ax.plot(self.steps, self.epsilon, color = 'magenta')
+        self.epsilon_ax.set_xlim(min_steps, max_steps)
+        self.epsilon_ax.set_ylim(0, 1)
+
+        self.loss_ax.plot(self.steps, self.loss, color = 'red')
+        self.loss_ax.set_xlim(min_steps, max_steps)
+        self.loss_ax.set_ylim(0, max(self.loss))
+
         plt.draw()
         plt.pause(0.001)
 
@@ -72,42 +122,29 @@ class Memo(object):
 class Memory(object):
     def __init__(self, size):
         self.size = size
-        self.buffer_size = 0
+        self.counter = 0
         self.buffer = []
 
-        self.epoch_end = True
-        self.batch_indexes = []
-
     def store(self, memo):
-        if self.buffer_size < self.size:
-            self.buffer_size += 1
+        if len(self.buffer) <= self.size:
             self.buffer.append(memo)
         else:
-            index = random.randint(0, self.size - 1)
+            index = self.counter % self.size
             self.buffer[index] = memo
 
     def batch(self, size):
-        if self.epoch_end:
-            self.epoch_end = False
-            self.batch_indexes = [i for i in range(self.size - 1)]
+        sample_size = min(size, len(self.buffer))
+        sample = random.sample(self.buffer, sample_size)
 
-        sample_size = min(size, len(self.batch_indexes))
-        indexes = np.random.choice(
-            self.batch_indexes,
-            size = sample_size,
-            replace = False
-        )
-        for index in indexes:
-            self.batch_indexes.remove(index)
-        if len(self.batch_indexes) <= 0:
-            self.epoch_end = True
-
-        s = np.array([self.buffer[i].s for i in indexes])
-        a = np.array([self.buffer[i].a for i in indexes])
-        r = np.array([self.buffer[i].r for i in indexes])
-        s_ = np.array([self.buffer[i].s_ for i in indexes])
+        s = np.array([element.s for element in sample])
+        a = np.array([element.a for element in sample])
+        r = np.array([element.r for element in sample])
+        s_ = np.array([element.s_ for element in sample])
 
         return s, a, r, s_
+
+    def __len__(self):
+        return len(self.buffer)
 
 # Deep QNetwork
 class DQN(object):
@@ -235,6 +272,11 @@ class DQN(object):
 # Double Dueling Deep QNetwork
 class DDDQN(object):
     def __init__(self, load = False):
+        title = 'learn_rate: ' + str(LEARNING_RATE)
+        title += ' | ep_start: ' + str(EPISODE_START)
+        title += ' | explo: ' + str(EXPLORATION)
+        title += ' | mem_size: ' + str(MEMORY_SIZE)
+        sys.stdout.write('\x1b]2;' + title + '\x07')
         self.is_ai = False
         self.plotter = Plotter()
 
@@ -243,16 +285,14 @@ class DDDQN(object):
             self.target_qn = DQN(H_SIZE, 'TargetDQN')
 
             with tf.variable_scope('Replace'):
-                self.trainables = tf.trainable_variables()
-                self.target_replace = self._replace(
-                    self.trainables,
-                    TAU
-                )
+                t_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, 'TargetDQN')
+                e_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, 'MainDQN')
+                self.replace_target_op = [tf.assign(t, e) for t, e in zip(t_params, e_params)]
 
             self.memory = Memory(MEMORY_SIZE)
 
             self.e = E_GREEDY
-            self.e_factor = (E_GREEDY - 0.1) / EXPLORATION
+            self.e_factor = (E_GREEDY - E_GREEDY_MIN) / EXPLORATION
 
             self.init = tf.global_variables_initializer()
             self.saver = tf.train.Saver()
@@ -266,6 +306,7 @@ class DDDQN(object):
             self.episode = 0
             self.episode_trained = False
             self.total_reward = 0
+            self.last_total_reward = 0
 
         self.sess.run(self.init)
         if load:
@@ -275,23 +316,17 @@ class DDDQN(object):
                 ckpt.model_checkpoint_path
             )
 
-    def _replace(self, trainables, tau):
-        total_vars = len(trainables)
-        op_holder = []
-        for idx, var in enumerate(trainables[0:total_vars//2]):
-            val = trainables[idx + total_vars//2].value()
-            assign_val = (var.value() * tau) + ((1 - tau) * val)
-            element = trainables[idx + total_vars//2].assign((assign_val))
-            op_holder.append(element)
-        return op_holder
-
-    def _update_target(self, target_replace, sess):
-        for op in target_replace:
-            sess.run(op)
-
     def store(self, s, a, r, s_):
-        memo = Memo(s, a, r, s_)
+        memo = Memo(self.preprocess(s), a, r, self.preprocess(s_))
         self.memory.store(memo)
+
+    def switch_networks(self):
+        temp = self.main_qn
+        self.main_qn = self.target_qn
+        self.target_qn = temp
+
+    def preprocess(self, input):
+        return np.array(input) / 255.0
 
     def choose_action(self, image_input):
         if np.random.rand(1) < self.e or self.global_step < EPISODE_START:
@@ -301,7 +336,7 @@ class DDDQN(object):
             a = self.sess.run(
                 self.main_qn.predict,
                 feed_dict = {
-                    self.main_qn.image_in: (((np.array([image_input]) / 255.0) - 0.5) * 2.0)
+                    self.main_qn.image_in: self.preprocess([image_input])
                 }
             )[0]
             self.is_ai = True
@@ -310,6 +345,7 @@ class DDDQN(object):
 
     def update_training_variables(self):
         self.episode += 1
+        self.last_total_reward = self.total_reward
         self.total_reward = 0
         self.episode_trained = False
 
@@ -320,52 +356,48 @@ class DDDQN(object):
 
             if not self.episode_trained and (self.episode - EPISODE_START) % TRAINING_FREQUENCY == 0:
                 self.episode_trained = True
-                self.e = self.e - self.e_factor if self.e > 0.1 else 0.1
+                self.e = self.e - self.e_factor if self.e > E_GREEDY_MIN else E_GREEDY_MIN
 
-                for epoch in range(TRAING_EPOCHS):
-                    epoch_end = False
-                    i = 1
+                # if np.random.uniform() < 0.5:
+                    # self.switch_networks()
 
-                    while not epoch_end:
-                        batch_s, batch_a, batch_r, batch_s_ = self.memory.batch(BATCH)
-                        size = batch_s.shape[0]
+                batch_s, batch_a, batch_r, batch_s_ = self.memory.batch(BATCH)
+                size = batch_s.shape[0]
 
-                        q1 = self.sess.run(
-                            self.main_qn.predict,
-                            feed_dict = {
-                                self.main_qn.image_in: batch_s_
-                            }
-                        )
-                        q2 = self.sess.run(
-                            self.target_qn.q_out,
-                            feed_dict = {
-                                self.target_qn.image_in: batch_s_
-                            }
-                        )
+                q1 = self.sess.run(
+                    self.main_qn.predict,
+                    feed_dict = {
+                        self.main_qn.image_in: batch_s_
+                    }
+                )
+                q2 = self.sess.run(
+                    self.target_qn.q_out,
+                    feed_dict = {
+                        self.target_qn.image_in: batch_s_
+                    }
+                )
 
-                        double_q = q2[range(size), q1]
-                        target_q = batch_r + (REWARD_DECAY * double_q)
+                double_q = q2[range(size), q1]
+                target_q = batch_r + (REWARD_DECAY * double_q)
 
-                        _, loss = self.sess.run(
-                            [self.main_qn.update, self.main_qn.loss],
-                            feed_dict = {
-                                self.main_qn.image_in: batch_s,
-                                self.main_qn.q_target: target_q,
-                                self.main_qn.actions: batch_a
-                            }
-                        )
+                _, loss = self.sess.run(
+                    [self.main_qn.update, self.main_qn.loss],
+                    feed_dict = {
+                        self.main_qn.image_in: batch_s,
+                        self.main_qn.q_target: target_q,
+                        self.main_qn.actions: batch_a
+                    }
+                )
 
-                        epoch_end = self.memory.epoch_end
-                        i += 1
-
-                    print('Epoch: ' + str(epoch) + ' Loss: ' + str(loss) + ' Qvalue: ' + str(np.mean(q1)))
+                print('Episode: ' + str(self.episode) + ' Loss: ' + str(loss) + ' Qvalue: ' + str(np.mean(double_q)))
 
                 # Update Eval Graph
-                self.plotter.add(np.mean(q1), self.total_reward, self.episode)
+                self.plotter.add(np.max(double_q), np.mean(double_q), np.min(double_q), self.last_total_reward, self.e, loss, self.episode)
                 self.plotter.observe()
 
-                # Update the second network wieghts
-                self._update_target(self.target_replace, self.sess)
+            # Update the second network wieghts
+            if self.episode % TARGET_UPDATE_FREQUENCE and self.episode != 0:
+                self.sess.run(self.replace_target_op)
 
         if self.global_step % SAVE_STEP == 0 and self.global_step != 0:
             self.saver.save(

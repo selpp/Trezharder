@@ -45,7 +45,7 @@ class PacManScene(Scene):
 
 
         restart_rule = Gameobject('')
-        restart_rule.add_mono([RestartTimeOut(10.0), RestartTeamOut(['object','player_rnd'])])
+        restart_rule.add_mono([RestartTimeOut(8.0), RestartTeamOut(['object','player_rnd'])])
         gameobjects.append(restart_rule)
 
 

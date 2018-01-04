@@ -1,67 +1,123 @@
 import numpy as np
 
+from copy import deepcopy
 from player_command import BotPlayerCommand
 from game_engine import GameEngineTools
 from input_manager import InputManager
 from data_manager import DataManager
-from double_dueling_deep_q_learning import MEMORY_SIZE, ACTIONS, WIDTH, HEIGHT, UPDATE_FREQUENCY
+from double_dueling_deep_q_learning import MEMORY_SIZE, ACTIONS, WIDTH, HEIGHT, UPDATE_FREQUENCY, IMAGE_BUFFER_SIZE
+
+class ImageBuffer(object):
+    def __init__(self, size, full = False):
+        self.size = size * len(DataManager.get_instance().feature_maps)
+        self.buffer = []
+        self.full = full
+
+    def append(self, image):
+        if len(self.buffer) < self.size:
+            self.buffer.append(image)
+        else:
+            if not self.full:
+                self.full = True
+            for i in range(self.size - 1, 1, -1):
+                self.buffer[i - 1] = self.buffer[i]
+            self.buffer[-1] = image
+
+    def get_frames(self):
+        if not self.full:
+            return None
+
+        frames = np.zeros((WIDTH, HEIGHT, self.size))
+        i = 0
+        for feature_map in self.buffer:
+            frames[:, :, i] = feature_map
+            i += 1
+
+        return frames
 
 class DeepPlayerCommand(BotPlayerCommand):
     def __init__(self,reward_calculator):
         BotPlayerCommand.__init__(self)
         self.rc = reward_calculator
         self.old_action = [0 if i != 0 else 1 for i in range(len(self.cmd))]
-        self.prev = None
         self.action_vector = None
-        self.has_played = False
+        self.prev_frames = ImageBuffer(IMAGE_BUFFER_SIZE)# None
+        self.old_reward = None
+        # self.has_played = False
+
+    def get_current_frames(self):
+        curr_frames = deepcopy(self.prev_frames)
+        for id, _ in DataManager.get_instance().feature_maps.iteritems():
+            GameEngineTools.update_feature_map(id)
+            feature_map = np.array(GameEngineTools.get_current_feature_map(id))
+            curr_frames.append(feature_map)
+
+        return curr_frames
+
+    def get_action(self, curr_frames):
+        if GameEngineTools.instance.model.global_step % UPDATE_FREQUENCY == 0 and self.prev_frames.full:
+            action_index = GameEngineTools.instance.model.choose_action(curr_frames.get_frames())
+            action_vector = [0 if i != action_index else 1 for i in range(ACTIONS)]
+        else:
+            action_vector = self.old_action
+        return action_vector
+
+    def get_reward(self):
+        reward = self.rc.r * 5 if GameEngineTools.instance.model.is_ai else self.rc.r
+        GameEngineTools.instance.model.total_reward += reward
+        return reward
+
+    def store_and_train(self, curr_frames):
+        if self.prev_frames.full:
+            GameEngineTools.instance.model.store(self.prev_frames.get_frames(), self.old_action.index(1), self.old_reward / 5.0, curr_frames.get_frames())
+            GameEngineTools.instance.model.training_step()
 
     def get_new_command(self):
         GameEngineTools.pause()
 
-        channels = len(DataManager.get_instance().feature_maps)
-        curr = np.zeros((WIDTH, HEIGHT, channels))
-        i = 0
-        for id, _ in DataManager.get_instance().feature_maps.iteritems():
-            GameEngineTools.update_feature_map(id)
-            feature_map = np.array(GameEngineTools.get_current_feature_map(id))
-            curr[:, :, i] = feature_map
-            i += 1
-        curr = np.array(curr)
+        # Get current frames
+        curr_frames = self.get_current_frames()
 
-        if GameEngineTools.instance.model.global_step % UPDATE_FREQUENCY == 0:
-            action_index = GameEngineTools.instance.model.choose_action(curr)
-            self.action_vector = [0 if i != action_index else 1 for i in range(ACTIONS)]
-        else:
-            self.action_vector = self.old_action
+        # Choose action
+        self.action_vector = self.get_action(curr_frames)
         self.vector_to_command(self.action_vector)
-        if self.has_played:
-            GameEngineTools.instance.model.store(self.prev, self.old_action.index(1), self.rc.r, curr)
-            GameEngineTools.instance.model.total_reward += self.rc.r
-        GameEngineTools.instance.model.training_step()
 
+        # Observe reward
+        reward = self.get_reward()
+
+        # Store Experience and Train
+        self.store_and_train(curr_frames)
+
+        # Update Values
+        self.old_action = self.action_vector
+        self.old_reward = reward
+        self.prev_frames = deepcopy(curr_frames)
+        # self.has_played = True
+
+        GameEngineTools.restart()
+
+        # Debug
+        self.print_console_infos()
+
+    def print_console_infos(self):
         print('==================== AI ======================')
         self.print_action()
         self.print_model_data()
         print('==============================================\n')
 
-        self.old_action = self.action_vector
-        self.prev = curr
-        self.has_played = True
-
-        GameEngineTools.restart()
-
     def print_model_data(self):
         plain = u'\u2588'
         block = u'\u2591'
 
-        full = plain if GameEngineTools.instance.model.memory.buffer_size >= MEMORY_SIZE else block
+        full = plain if len(GameEngineTools.instance.model.memory) >= MEMORY_SIZE else block
+        training = plain if GameEngineTools.get_learning_mode() else block
 
-        print('Reward: ' + str(self.rc.r))
-        print('Epsilon: ' + str(GameEngineTools.instance.model.e))
         print('Step: ' + str(GameEngineTools.instance.model.global_step))
         print('Episode: ' + str(GameEngineTools.instance.model.episode))
+        print('Reward: ' + str(self.rc.r))
         print('TotalReward: ' + str(GameEngineTools.instance.model.total_reward))
         print('Memory full: ' + full)
+        print('Training: ' + training)
 
     def print_action(self):
         plain = u'\u2588'
