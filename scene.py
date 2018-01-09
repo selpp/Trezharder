@@ -11,14 +11,14 @@ class SceneManager(object):
     def load(SceneType):
         if SceneManager._current_scene is not None:
             SceneManager._current_scene.on_destroy()
-        SceneManager._current_scene = SceneType()
+        GameEngineTools.set_new_scene(SceneType)
         SceneManager._SceneType = SceneType
         
         
     @staticmethod
     def restart():
-        SceneManager._current_scene.on_destroy()
-        SceneManager._current_scene = SceneManager._SceneType()
+        GameEngineTools.destroy_scene()
+        SceneManager.load(SceneManager._SceneType)
 
 class Scene(object):
     __metaclass__ = ABCMeta
@@ -27,11 +27,6 @@ class Scene(object):
         self.gameobjects = self.load()
         for gameobject in self.gameobjects:
             GameEngineTools.instantiate(gameobject)
-        
-    def on_destroy(self):
-        for gameobject in self.gameobjects:
-            if gameobject.is_alive:
-                GameEngineTools.DestroyObject(gameobject)
 
     @abstractmethod
     def load(self):

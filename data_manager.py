@@ -1,29 +1,50 @@
 # Data Manager
-from pygame import image, Rect, mixer
+import numpy as np
+
+from pygame import image, Rect, mixer, Surface, surfarray
+from PIL import Image
+import matplotlib.pyplot as plt
 
 # ===================================================
 # DATAMANAGER
 
 class DataManager(object):
 	def __init__(self):
-		# mixer.init(44100, -16, 2, 2048)
 		self.sprite_sheets = {}
 		self.tiles = {}
+		# mixer.init(44100, -16, 2, 2048)
 		# self.sounds = {}
-	
+		self.feature_maps = {}
+
 	instance = None
 	@staticmethod
 	def get_instance():
 		if DataManager.instance is None:
 			DataManager.instance = DataManager()
 		return DataManager.instance
-		 
+
+	def add_feature_map(self, id, width, height):
+		if id in self.feature_maps:
+			return
+		subscreen = Surface((width, height))
+		self.feature_maps[id] = subscreen
+
+	def feature_map_to_array(self, id, width, height):
+		if not id in self.feature_maps:
+			return
+		surface = self.feature_maps[id]
+		arr = surfarray.array3d(surface)
+		image = Image.fromarray(arr)
+		image = image.resize((width, height), Image.NEAREST)
+		image = image.convert('L',(0.2889,0.5870,0.1140,0))
+		return np.array(image)
+
 	def load_sound(self, id, sound_path):
 		if id in self.sounds:
 			return
 		sound = mixer.Sound(sound_path)
 		self.sounds[id] = Sound(sound)
-	
+
 	def load_sprite_sheet(self, id, sprite_sheet_path, infos):
 		if id in self.sprite_sheets:
 			return

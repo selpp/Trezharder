@@ -6,7 +6,7 @@ from collider import BoxCollider
 from monobehaviour import MonoBehaviour
 from data_manager import DataManager
 import pygame
-from pygame import Rect
+from pygame import Rect, transform
 # ===================================================
 # MAPMANAGER
 
@@ -22,14 +22,28 @@ class TileMap(object):
 	def draw(self, screen):
 		tile = self.data_manager.get_tile(self.id)
 		top_left = self.transform.get_position() - self.transform.get_scale() / 2.0
-		screen.blit(tile.img, (top_left.x, top_left.y))
+		scale = self.transform.get_scale()
+		resized = transform.scale(tile.img, (scale.x, scale.y))
+		screen.blit(resized, (top_left.x, top_left.y))
 
-	def draw_ai(self, screen):
+	def draw_collision_vision(self, screen):
 		scale = self.transform.get_scale() / 2.0
 		draw_pos = self.transform.get_position() - scale
 		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
-	
+
+	def draw_simplified(self, screen):
+		scale = self.transform.get_scale() / 2.0
+		draw_pos = self.transform.get_position() - scale
+		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
+		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
+
+	def draw_feature_map(self, id):
+		if id == 'COLLISIONS':
+			self.draw_collision_vision(DataManager.get_instance().feature_maps[id])
+		elif id == 'SIMPLIFIED':
+			self.draw_simplified(DataManager.get_instance().feature_maps[id])
+
 	def draw_debug(self, screen):
 		if self.collider is not None:
 			self.collider.draw_debug(screen)
@@ -59,8 +73,8 @@ class MapManager(MonoBehaviour):
 	def start(self):
 		 pass
 
-	def load(self, path = None):
-		self.map = []
+	def load_from_file(self, path = None):
+		raw_map = []
 		with open(path) as file:
 			lines = file.readlines()
 			for line in lines:
@@ -69,25 +83,29 @@ class MapManager(MonoBehaviour):
 					if char != '\n':
 						row.append(int(char))
 				if len(row) > 0:
-					self.map.append(row)
-		self.width = len(self.map[0])
-		self.height = len(self.map)
+					raw_map.append(row)
+		self.load(raw_map)
 
-
-		for y in range(len(self.map)):
-			for x in range(len(self.map[0])):
+	def load(self,raw_map):
+		self.raw_map = raw_map
+		self.width = len(self.raw_map[0])
+		self.height = len(self.raw_map)
+		self.map = [[None for x in range(self.width)] for y in range(self.height)]
+		for y in range(self.height):
+			for x in range(self.width):
 				position = Vector(x * self.infos.width + self.infos.width / 2.0, y * self.infos.height + self.infos.height / 2.0)
-				value = self.map[y][x]
+				value = self.raw_map[y][x]
 				is_collider = False if value == 0 else True
 				key = self.types.keys()[self.types.values().index(value)]
 				self.map[y][x] = TileMap(key,self.gameobject, position, 0.0, Vector(self.infos.width, self.infos.height), self.data_manager, is_collider)
-		
+
+
 	def update(self,dt):
 		 pass
-	 
+
 	def fixed_update(self,fdt):
 		 pass
-	 
+
 	def save(self, path):
 		if self.map is None:
 			return
@@ -108,12 +126,12 @@ class MapManager(MonoBehaviour):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw(screen)
 
-	def draw_ai(self, screen):
+	def draw_feature_map(self, id):
 		if self.map is None:
 			return
 		for y in range(len(self.map)):
 			for x in range(len(self.map[0])):
-				self.map[y][x].draw_ai(screen)
+				self.map[y][x].draw_feature_map(id)
 
 	def draw_debug(self, screen):
 		if self.map is None:
@@ -122,7 +140,7 @@ class MapManager(MonoBehaviour):
 			for x in range(len(self.map[0])):
 				self.map[y][x].draw_debug(screen)
 
-	
+
 	def z_buff(self, z_index, z_buffer):
 		if self.map is None:
 			return
