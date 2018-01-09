@@ -10,8 +10,6 @@ from input_manager import InputManager
 from z_buffer import ZBuffer
 from pygame import image, surfarray, Surface
 from PIL import Image
-import numpy as np
-#from model_1 import DeepQModel
 
 class GameEngine:
     def __init__(self):
