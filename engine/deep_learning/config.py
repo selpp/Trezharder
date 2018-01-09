@@ -1,0 +1,45 @@
+import engine.deep_learning.net_config as net
+
+# ========== Params =============
+
+SUMMARY_STEP = 30
+SUMMARY_PATH = 'logs/'
+
+SAVE_STEP = 1e3
+SAVE_PATH = 'checkpoints/'
+
+PLOTTER_MEAN = 8
+PLOTTER_SUMMARY = 'plotters/plot.csv'
+PLOTTER_LIMIT = 15000
+
+ACTIONS = 6
+WIDTH = 84
+HEIGHT = 84
+IMAGE_BUFFER_SIZE = 4
+CHANNELS = IMAGE_BUFFER_SIZE
+
+CNN = [
+    net.Conv2D(16, [8, 8], [4, 4], 'Conv1'),
+    net.Conv2D(32, [4, 4], [2, 2], 'Conv2')
+]
+H_SIZE = 512
+
+LEARNING_RATE = 0.00025
+MOMENTUM = 0.95
+BATCH = 32
+
+BURN_IN = 30#0#50000
+HAPPY_REPLAY = False
+SCORE_MIN = 30
+
+E_GREEDY = 1.0
+E_GREEDY_MIN = 0.01
+REWARD_DECAY = 0.99
+EXPLORATION = 3000#1000000
+
+MEMORY_SIZE = 100000#1000000
+
+UPDATE_FREQUENCY = 4
+
+TRAINING_FREQUENCY = 1
+TARGET_UPDATE_FREQUENCE = 6000#30000

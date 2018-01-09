@@ -1,10 +1,11 @@
-from game_engine import GameEngine , GameEngineTools
-from gameobject import Gameobject
-from mono_trezharder import MonoTrezharder
-from maze_melee import MazeMelee
-from scene import SceneManager
+from engine.core.game_engine import GameEngine , GameEngineTools
+from engine.core.gameobject import Gameobject
+from engine.core.scene import SceneManager
+
+from games.pacman.pacman_scene import PacManScene
+from games.maze_melee.maze_melee import MazeMelee
 
 ge = GameEngine()
 ge_tools = GameEngineTools(ge)
-SceneManager.load(MazeMelee)
+SceneManager.load(PacManScene)
 ge.loop()
