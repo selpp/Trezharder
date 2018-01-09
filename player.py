@@ -278,8 +278,8 @@ class Player(MonoBehaviour):
 
 		self.command.update_command()
 
-		if self.command.B:
-			self.try_kill()
+		#if self.command.B:
+		self.try_kill()
 
 	def try_kill(self):
 		for ennemy in self.ennemies:

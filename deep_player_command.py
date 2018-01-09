@@ -1,11 +1,11 @@
 import numpy as np
+import config as conf
 
 from copy import deepcopy
 from player_command import BotPlayerCommand
 from game_engine import GameEngineTools
 from input_manager import InputManager
 from data_manager import DataManager
-from double_dueling_deep_q_learning import MEMORY_SIZE, ACTIONS, WIDTH, HEIGHT, UPDATE_FREQUENCY, IMAGE_BUFFER_SIZE
 
 class ImageBuffer(object):
     def __init__(self, size, full = False):
@@ -27,7 +27,7 @@ class ImageBuffer(object):
         if not self.full:
             return None
 
-        frames = np.zeros((WIDTH, HEIGHT, self.size))
+        frames = np.zeros((conf.WIDTH, conf.HEIGHT, self.size))
         i = 0
         for feature_map in self.buffer:
             frames[:, :, i] = feature_map
@@ -41,7 +41,7 @@ class DeepPlayerCommand(BotPlayerCommand):
         self.rc = reward_calculator
         self.old_action = [0 if i != 0 else 1 for i in range(len(self.cmd))]
         self.action_vector = None
-        self.prev_frames = ImageBuffer(IMAGE_BUFFER_SIZE)# None
+        self.prev_frames = ImageBuffer(conf.IMAGE_BUFFER_SIZE)# None
         self.old_reward = None
         # self.has_played = False
 
@@ -55,9 +55,9 @@ class DeepPlayerCommand(BotPlayerCommand):
         return curr_frames
 
     def get_action(self, curr_frames):
-        if GameEngineTools.instance.model.global_step % UPDATE_FREQUENCY == 0 and self.prev_frames.full:
+        if GameEngineTools.instance.model.global_step % conf.UPDATE_FREQUENCY == 0 and self.prev_frames.full:
             action_index = GameEngineTools.instance.model.choose_action(curr_frames.get_frames())
-            action_vector = [0 if i != action_index else 1 for i in range(ACTIONS)]
+            action_vector = [0 if i != action_index else 1 for i in range(conf.ACTIONS)]
         else:
             action_vector = self.old_action
         return action_vector
@@ -65,6 +65,8 @@ class DeepPlayerCommand(BotPlayerCommand):
     def get_reward(self):
         reward = self.rc.r * 5 if GameEngineTools.instance.model.is_ai else self.rc.r
         GameEngineTools.instance.model.total_reward += reward
+        if reward > 0:
+            GameEngineTools.instance.model.score += reward
         return reward
 
     def store_and_train(self, curr_frames):
@@ -109,15 +111,15 @@ class DeepPlayerCommand(BotPlayerCommand):
         plain = u'\u2588'
         block = u'\u2591'
 
-        full = plain if len(GameEngineTools.instance.model.memory) >= MEMORY_SIZE else block
-        training = plain if GameEngineTools.get_learning_mode() else block
+        full = plain if len(GameEngineTools.instance.model.memory) >= conf.MEMORY_SIZE else block
 
         print('Step: ' + str(GameEngineTools.instance.model.global_step))
         print('Episode: ' + str(GameEngineTools.instance.model.episode))
         print('Reward: ' + str(self.rc.r))
         print('TotalReward: ' + str(GameEngineTools.instance.model.total_reward))
+        print('Score: ' + str(GameEngineTools.instance.model.score))
+        print('Memory size: ' + str(len(GameEngineTools.instance.model.memory)))
         print('Memory full: ' + full)
-        print('Training: ' + training)
 
     def print_action(self):
         plain = u'\u2588'

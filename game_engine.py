@@ -1,3 +1,7 @@
+import numpy as np
+import double_dueling_deep_q_learning as dddqn
+import config as conf
+
 from pygame import display, event, font , image, transform
 from time import clock
 from data_manager import DataManager
@@ -6,8 +10,6 @@ from input_manager import InputManager
 from z_buffer import ZBuffer
 from pygame import image, surfarray, Surface
 from PIL import Image
-import numpy as np
-from double_dueling_deep_q_learning import DDDQN, WIDTH, HEIGHT
 
 class GameEngine:
     def __init__(self):
@@ -171,9 +173,9 @@ class GameEngineTools(object):
         self.ge = ge
         ge.pause_timers()
 
-        self.deep_width = WIDTH
-        self.deep_height = HEIGHT
-        self.model = DDDQN()
+        self.deep_width = conf.WIDTH
+        self.deep_height = conf.HEIGHT
+        self.model = dddqn.DDDQN()
         self.learning_mode = False
 
         self.current_feature_maps = {}
