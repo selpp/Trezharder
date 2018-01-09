@@ -28,7 +28,7 @@ class Gameobject(object):
             self.new_monobehaviours.append(mono)
         
     def get_mono(self,type_mono):
-        for mono in self.monobehaviours:
+        for mono in (self.monobehaviours + self.new_monobehaviours):
             if isinstance(mono,type_mono):
                 return mono
         return None

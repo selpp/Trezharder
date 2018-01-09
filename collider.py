@@ -8,8 +8,7 @@ class Collider:
     __metaclass__ = ABCMeta
     
     @abstractmethod
-    def __init__(self,collision_handler,parent_transform,position,gameobject,is_trigger = False):
-        self.handler = collision_handler
+    def __init__(self,parent_transform,position,gameobject,is_trigger = False):
         self.position = position
         self.parent_transform = parent_transform
         self.is_trigger = is_trigger
@@ -21,8 +20,10 @@ class Collider:
     def get_tag(self):
         return self.parent_transform.tag
     
+    '''
     def on_collision(self):
-        self.handler()
+        self.gameobject.on_collision
+    '''
         
     def is_trigger_activate(self):
         return self.is_trigger
@@ -39,8 +40,8 @@ class Collider:
         pass
     
 class BoxCollider(Collider):
-    def __init__(self,collision_handler,parent_transform,position,scale,is_trigger = False):
-        Collider.__init__(self,collision_handler,parent_transform,position,is_trigger)
+    def __init__(self,parent_transform,position,scale,gameobject,is_trigger = False):
+        Collider.__init__(self,parent_transform,position,gameobject,is_trigger)
         self.scale = scale
         
     def try_collision(self,collider):
@@ -80,8 +81,8 @@ class BoxCollider(Collider):
         DebugDrawings.draw_rect(screen, Vector(x, y), w * 2, h * 2, (0, 255, 0))
         
 class CircleCollider(Collider):
-    def __init__(self,collision_handler,parent_transform,position,radius,is_trigger = False):
-        Collider.__init__(self,collision_handler,parent_transform,position,is_trigger)
+    def __init__(self,parent_transform,position,radius,gameobject,is_trigger = False):
+        Collider.__init__(self,parent_transform,position,gameobject,is_trigger)
         self.radius = radius
         
     def try_collision(self,collider):

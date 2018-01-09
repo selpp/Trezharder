@@ -17,7 +17,7 @@ class TileMap(object):
 		self.transform = Transform(position, angle, scale)
 		self.collider = None
 		if is_collider:
-			self.collider = BoxCollider(None, self.transform, Vector(0.0, 0.0), Vector(1.0, 1.0),gameobject)
+			self.collider = BoxCollider(self.transform, Vector(0.0, 0.0), Vector(1.0, 1.0),gameobject)
 
 	def draw(self, screen):
 		tile = self.data_manager.get_tile(self.id)

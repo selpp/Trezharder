@@ -72,7 +72,7 @@ class Animator():
 
 		if self.anim_timer > self.current_animation.rate:
 			iterations = int(self.anim_timer // self.current_animation.rate)
-			rest = (self.anim_timer / self.current_animation.rate) - iterations
+			rest = (self.anim_timer % self.current_animation.rate)
 
 			self.anim_timer = rest
 			for i in range(iterations):
