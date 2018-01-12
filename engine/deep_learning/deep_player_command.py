@@ -1,5 +1,5 @@
 import numpy as np
-import config as conf
+import engine.deep_learning.config as conf
 
 from copy import deepcopy
 from engine.core.inputs.player_command import BotPlayerCommand
@@ -46,7 +46,7 @@ class DeepPlayerCommand(BotPlayerCommand):
         # self.has_played = False
 
     def get_current_frames(self):
-        curr_frames = deepcopy(self.prev_frames)
+        curr_frames = self.prev_frames
         for id, _ in DataManager.get_instance().feature_maps.iteritems():
             GameEngineTools.update_feature_map(id)
             feature_map = np.array(GameEngineTools.get_current_feature_map(id))
@@ -63,15 +63,17 @@ class DeepPlayerCommand(BotPlayerCommand):
         return action_vector
 
     def get_reward(self):
-        reward = self.rc.r * 5 if GameEngineTools.instance.model.is_ai else self.rc.r
-        GameEngineTools.instance.model.total_reward += reward
+        reward = self.rc.r
+        preprocessed_reward = GameEngineTools.instance.model.preprocess_reward(reward)
+        GameEngineTools.instance.model.total_reward += preprocessed_reward
         if reward > 0:
-            GameEngineTools.instance.model.score += reward
-        return reward
+            GameEngineTools.instance.model.score += preprocessed_reward
+        GameEngineTools.instance.model.actual_reward = preprocessed_reward
+        return preprocessed_reward
 
     def store_and_train(self, curr_frames):
         if self.prev_frames.full:
-            GameEngineTools.instance.model.store(self.prev_frames.get_frames(), self.old_action.index(1), self.old_reward / 5.0, curr_frames.get_frames())
+            GameEngineTools.instance.model.store(self.prev_frames.get_frames(), self.old_action.index(1), self.old_reward, curr_frames.get_frames())
             GameEngineTools.instance.model.training_step()
 
     def get_new_command(self):
@@ -120,6 +122,7 @@ class DeepPlayerCommand(BotPlayerCommand):
         print('Score: ' + str(GameEngineTools.instance.model.score))
         print('Memory size: ' + str(len(GameEngineTools.instance.model.memory)))
         print('Memory full: ' + full)
+        #print('Double_Q: ' + str(conf.Q_CHEAT))
 
     def print_action(self):
         plain = u'\u2588'

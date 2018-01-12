@@ -7,9 +7,7 @@ from matplotlib.gridspec import GridSpec
 # ========== Plotter ==========
 class Plotter(object):
     def __init__(self):
-        self.q_eval_max = []
-        self.q_eval_avg = []
-        self.q_eval_min = []
+        self.q_eval = []
         self.reward = []
         self.epsilon = []
         self.loss = []
@@ -28,9 +26,7 @@ class Plotter(object):
         self.total_reward_ax.set_ylabel('Total Reward')
 
         self.q_eval_ax = plt.subplot(self.gs[1, :])
-        self.q_eval_ax.plot(self.steps, self.q_eval_max, color = 'blue')
-        self.q_eval_ax.plot(self.steps, self.q_eval_avg, color = 'cyan')
-        self.q_eval_ax.plot(self.steps, self.q_eval_min, color = 'grey')
+        self.q_eval_ax.plot(self.steps, self.q_eval, color = 'blue')
         self.q_eval_ax.set_ylabel('Qeval')
 
         self.epsilon_ax = plt.subplot(self.gs[2, -1])
@@ -48,13 +44,11 @@ class Plotter(object):
         self.gs.tight_layout(self.fig, h_pad=0.5)
 
         with open(conf.PLOTTER_SUMMARY, 'w') as myfile:
-            myfile.write('q_max;q_avg;q_min;r;e;l;s;t\n')
+            myfile.write('q;actual_r;r;e;l;s;t\n')
 
-    def add(self, q_max, q_avg, q_min, r, e, l, s, t):
+    def add(self, q, r, e, l, s, t):
         if self.size > conf.PLOTTER_LIMIT:
-            self.q_eval_max.pop(0)
-            self.q_eval_avg.pop(0)
-            self.q_eval_min.pop(0)
+            self.q_eval.pop(0)
             self.reward.pop(0)
             self.epsilon.pop(0)
             self.loss.pop(0)
@@ -62,9 +56,7 @@ class Plotter(object):
             self.steps.pop(0)
 
         self.size += 1
-        self.q_eval_max.append(q_max)
-        self.q_eval_avg.append(q_avg)
-        self.q_eval_min.append(q_min)
+        self.q_eval.append(q)
         self.reward.append(r)
         self.epsilon.append(e)
         self.loss.append(l)
@@ -72,8 +64,8 @@ class Plotter(object):
         self.steps.append(t)
 
         with open(conf.PLOTTER_SUMMARY, 'a') as myfile:
-            string = '{0};{1};{2};{3};{4};{5};{6};{7}\n'
-            string = string.format(str(q_max), str(q_avg), str(q_min), str(r), str(e), str(l), str(s), str(t))
+            string = '{0};{1};{2};{3};{4};{5}\n'
+            string = string.format(str(q), str(r), str(e), str(l), str(s), str(t))
             myfile.write(string)
 
     def clear_axis(self):
@@ -93,11 +85,9 @@ class Plotter(object):
         self.total_reward_ax.set_ylim(min(self.reward) - 2, max(self.reward) + 2)
         self.total_reward_ax.set_ylabel('Total Reward')
 
-        self.q_eval_ax.plot(self.steps, self.get_mean_list(self.q_eval_max), color = 'blue')
-        self.q_eval_ax.plot(self.steps, self.get_mean_list(self.q_eval_avg), color = 'cyan')
-        self.q_eval_ax.plot(self.steps, self.get_mean_list(self.q_eval_min), color = 'grey')
+        self.q_eval_ax.plot(self.steps, self.q_eval, color = 'blue')
         self.q_eval_ax.set_xlim(min_steps, max_steps)
-        min_q, max_q = min(min(self.q_eval_max), min(self.q_eval_avg), min(self.q_eval_min)), max(max(self.q_eval_max), max(self.q_eval_avg), max(self.q_eval_min))
+        min_q, max_q = min(self.q_eval), max(self.q_eval)
         self.q_eval_ax.set_ylim(min_q, max_q)
         self.q_eval_ax.set_ylabel('Qeval')
 

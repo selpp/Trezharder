@@ -1,7 +1,7 @@
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
 import numpy as np
 import engine.deep_learning.config as conf
+import engine.deep_learning.utils as utils
 
 # Deep QNetwork
 class DDQN(object):
@@ -20,34 +20,38 @@ class DDQN(object):
         with tf.variable_scope('ConvNet'):
             self.conv_in = self.image_in
             for conv in conf.CNN:
-                self.conv_in = slim.conv2d(self.conv_in, conv.channels, conv.kernel, stride = conv.stride, scope = conv.scope)
-            self.last_conv = slim.conv2d(self.conv_in, h_size, [4, 4], stride = [1, 1], scope = 'LastConv')
+                self.conv_in = utils.conv2D(self.conv_in, conv.channels, conv.kernel, conv.stride, conv.scope)
 
     def _final_q_values(self, h_size):
         with tf.variable_scope('FinalQValues'):
-            xavier = tf.contrib.layers.xavier_initializer()
+            self.flat_conv = utils.flatten(self.conv_in, 'FlatConv')
 
-            self.advantage_conv, self.value_conv = tf.split(self.last_conv, 2, 3)
-            self.advantage_flat = slim.flatten(self.advantage_conv, scope = 'AdvantageFlat')
-            self.value_flat = slim.flatten(self.value_conv, scope = 'ValueFlat')
+            self.advantage_hidden = utils.dense(self.flat_conv, h_size, 'AdvantageHidden')
+            self.value_hidden = utils.dense(self.flat_conv, h_size, 'ValueHidden')
 
-            self.advantage = slim.fully_connected(self.advantage_flat, conf.ACTIONS, activation_fn = None, scope = 'Advantage')
-            self.value = slim.fully_connected(self.value_flat, 1, activation_fn = None, scope = 'Value')
+            self.advantage = utils.dense(self.advantage_hidden, conf.ACTIONS, 'Advantage', activation_fn = None)
+            self.value = utils.dense(self.value_hidden, 1, 'Value', activation_fn = None)
 
-            advantage_mean = tf.reduce_mean(self.advantage, axis = 1, keep_dims = True)
+            advantage_mean = tf.reduce_mean(self.advantage, reduction_indices = 1, keep_dims = True)
             sub_mean = tf.subtract(self.advantage, advantage_mean)
             self.q_out = self.value + sub_mean
-            self.predict = tf.argmax(self.q_out, 1)
+            self.predict = tf.argmax(self.q_out, dimension = 1)
+
+    def _clip_error(self, e):
+        try:
+            return tf.select(tf.abs(e) < 1.0, 0.5 * tf.square(e), tf.abs(e) - 0.5)
+        except:
+            return tf.where(tf.abs(e) < 1.0, 0.5 * tf.square(e), tf.abs(e) - 0.5)
 
     def _loss(self):
         with tf.variable_scope('Loss'):
             self.q_target = tf.placeholder(name = 'QTarget', shape = [None], dtype = tf.float32)
             self.actions = tf.placeholder(name = 'Action', shape = [None], dtype = tf.int32)
-            self.action_onehot = tf.one_hot(self.actions, conf.ACTIONS, dtype = tf.float32)
-            self.q = tf.reduce_sum(tf.multiply(self.q_out, self.action_onehot), axis = 1)
-            self.td_error = tf.square(self.q_target - self.q, name = 'TDError')
-            self.loss_uncliped = tf.reduce_mean(self.td_error, name = 'LossUncliped')
-            self.loss = tf.clip_by_value(self.loss_uncliped, -1, 1, name = 'Loss')
+            self.action_onehot = tf.one_hot(self.actions, conf.ACTIONS, 1.0, 0.0, dtype = tf.float32)
+            self.q = tf.reduce_sum(tf.multiply(self.q_out, self.action_onehot), reduction_indices = 1, name = 'QActed')
+            self.delta = self.q_target - self.q
+            self.clipped_error = self._clip_error(self.delta)
+            self.loss = tf.reduce_mean(self.clipped_error, name = 'Loss')
 
-        self.trainer = tf.train.RMSPropOptimizer(conf.LEARNING_RATE, momentum = conf.MOMENTUM)#tf.train.AdamOptimizer(conf.LEARNING_RATE)
+        self.trainer = tf.train.RMSPropOptimizer(conf.LEARNING_RATE, momentum = conf.MOMENTUM, epsilon = conf.RMS_EPSILON) #tf.train.AdamOptimizer(conf.LEARNING_RATE)
         self.update = self.trainer.minimize(self.loss)

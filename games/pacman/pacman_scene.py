@@ -12,13 +12,15 @@ from games.pacman.restart_team_out import RestartTeamOut
 from games.pacman.reward_loot import RewardLoot
 
 class PacManScene(Scene):
+    maze_genarator = MazeGenerator(8, 6)
+    map = maze_genarator.generate()
+
     def __init__(self):
         Scene.__init__(self)
 
     def load(self):
         gameobjects = []
-        maze_genarator = MazeGenerator(8, 6)
-        map = maze_genarator.generate()
+        map = PacManScene.map
 
         my_map = Gameobject()
         mono_map = MapManager()

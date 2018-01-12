@@ -37,7 +37,7 @@ class TileMap(object):
 	def draw_simplified(self, screen):
 		scale = self.transform.get_scale() / 2.0
 		draw_pos = self.transform.get_position() - scale
-		color = (0, 0, 0) if self.id == 'STONE' or self.id == 'WOOD' else (255, 255, 255)
+		color =  (255, 255, 255) if self.id == 'STONE' or self.id == 'WOOD' else (0, 0, 0)
 		pygame.draw.rect(screen, color, Rect(draw_pos.x, draw_pos.y, scale.x * 2.0, scale.y * 2.0))
 
 	def draw_feature_map(self, id):

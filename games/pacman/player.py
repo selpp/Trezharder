@@ -38,8 +38,8 @@ class PlayerStateWalkRunState(State):
 		self.enter(player)
 
 	def enter(self, player):
-		self.initial_speed = 200
-		self.speed = 200
+		self.initial_speed = 400
+		self.speed = 400
 		self.speed_factor = 2
 
 		self.initial_animation_speed = 1
@@ -195,7 +195,7 @@ class  PlayerDeathState(State):
 
 class Player(MonoBehaviour):
 	def __init__(self,command,color,ennemies_name=''):
-		MonoBehaviour.__init__(self,2)
+		MonoBehaviour.__init__(self, 2)
 		self.command = command
 		self.color = color
 		self.ennemies_name = ennemies_name
@@ -207,8 +207,8 @@ class Player(MonoBehaviour):
 		self.rip = False
 		self.murderer = False
 		# ================= Transform =========================
-		self.transform.get_scale().x = 100
-		self.transform.get_scale().y = 100
+		self.transform.get_scale().x = 120#100
+		self.transform.get_scale().y = 120#100
 		self.transform.tag = 'player'
 		self.velocity = Vector(0.0, 0.0)
 		self.explode = False
@@ -285,8 +285,11 @@ class Player(MonoBehaviour):
 			if ennemy is None or ennemy is self.gameobject or not ennemy.is_alive:
 				continue
 			if (ennemy.transform.get_position() - self.transform.get_position()).magnitude() < self.range:
-					ennemy.get_mono(Player).die()
-					self.murderer = True
+				ennemy_player = ennemy.get_mono(Player)
+				if ennemy_player.rip:
+					break
+				ennemy_player.die()
+				self.murderer = True
 
 	def die(self):
 		self.rip = True
@@ -324,9 +327,10 @@ class Player(MonoBehaviour):
 	def draw_simplified(self, screen):
 		if self.rip:
 			return
-		x, y, w, h = self.gameobject.rigidbody.collider.get_world_box()
+		pos = self.transform.get_position()
+		scale = self.transform.get_scale()
 		color = (60, 60, 60) if self.color == 1 else (120, 120, 120)
-		pygame.draw.rect(screen, color, Rect(x - w, y - h, w * 2, h * 2))
+		pygame.draw.rect(screen, color, Rect(int(pos.x) - int(scale.x)/2.0, int(pos.y) - int(scale.y)/2.0, int(scale.x), int(scale.y)))
 
 	def draw_feature_map(self, id):
 		if not id in DataManager.get_instance().feature_maps:

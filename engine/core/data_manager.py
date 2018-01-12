@@ -37,7 +37,8 @@ class DataManager(object):
 		image = Image.fromarray(arr)
 		image = image.resize((width, height), Image.NEAREST)
 		image = image.convert('L',(0.2889,0.5870,0.1140,0))
-		return np.array(image)
+		arr = np.array(image, dtype = np.float32)
+		return arr
 
 	def load_sound(self, id, sound_path):
 		if id in self.sounds:

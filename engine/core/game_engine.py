@@ -44,7 +44,7 @@ class GameEngine:
 
         font.init()
         self.fps_font = font.SysFont("monospace", 20)
-        self.time_scale = 10.0
+        self.time_scale = conf.TIME_SCALE
 
     def init_graphics(self):
         self.data_manager = DataManager.get_instance()
@@ -128,6 +128,7 @@ class GameEngine:
             while self.fixed_timer  *  self.time_scale > self.fixed_rate:
                 self.fixed_update()
 
+
             if self.fps_timer > 4.0:
                 self.current_fps = self.tick_counter // 4.0
                 self.tick_counter = 0
@@ -184,7 +185,7 @@ class GameEngineTools(object):
 
         self.deep_width = conf.WIDTH
         self.deep_height = conf.HEIGHT
-        self.model = dddqn.DDDQN()
+        self.model = dddqn.DDDQN(load = conf.LOAD)
         self.learning_mode = False
 
         self.current_feature_maps = {}
@@ -226,12 +227,14 @@ class GameEngineTools(object):
         ge_tools = GameEngineTools.instance
         if not id in ge_tools.current_feature_maps:
             return None
-        return ge_tools.current_feature_maps[id]
+        arr = ge_tools.current_feature_maps[id]
+        return arr
 
     @staticmethod
     def update_feature_map(id):
         ge_tools = GameEngineTools.instance
-        ge_tools.current_feature_maps[id] = DataManager.get_instance().feature_map_to_array(id, ge_tools.deep_width, ge_tools.deep_height)
+        arr = DataManager.get_instance().feature_map_to_array(id, ge_tools.deep_width, ge_tools.deep_height)
+        ge_tools.current_feature_maps[id] = arr
 
     @staticmethod
     def find(name):

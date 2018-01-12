@@ -47,6 +47,7 @@ class DDDQN(object):
         self.last_total_reward = 0
         self.score = 0
         self.last_score = 0
+        self.actual_reward = 0
 
         self.sess.run(self.init)
         self.sess.run(self.replace_target_op)
@@ -55,8 +56,15 @@ class DDDQN(object):
             self.saver.restore(self.sess, ckpt.model_checkpoint_path)
 
     def store(self, s, a, r, s_):
-        memo = mem.Memo(self.preprocess(s), a, r, self.preprocess(s_))
+        memo = mem.Memo(self.preprocess(s), a, self.preprocess_reward(r), self.preprocess(s_))
         self.temp_memory.store(memo)
+
+    def preprocess_reward(self, r):
+        if r > 1:
+            r = 1
+        elif r < -1:
+            r = -1
+        return r
 
     def switch_networks(self):
         temp = self.main_qn
@@ -64,7 +72,7 @@ class DDDQN(object):
         self.target_qn = temp
 
     def preprocess(self, input):
-        return (np.array(input) -128.0) / 255.0
+        return np.array(input) / 255.0
 
     def choose_action(self, image_input):
         if np.random.rand(1) < self.e or self.global_step < conf.BURN_IN:
@@ -106,8 +114,10 @@ class DDDQN(object):
 
                 q1 = self.sess.run(self.main_qn.predict, feed_dict = {self.main_qn.image_in: batch_s_})
                 q2 = self.sess.run(self.target_qn.q_out, feed_dict = {self.target_qn.image_in: batch_s_})
+
                 double_q = q2[range(size), q1]
                 target_q = batch_r + (conf.REWARD_DECAY * double_q)
+                # conf.Q_CHEAT = q2
 
                 _, loss = self.sess.run(
                     [self.main_qn.update, self.main_qn.loss],
@@ -121,7 +131,7 @@ class DDDQN(object):
                 print('Episode: ' + str(self.episode) + ' Loss: ' + str(loss) + ' Qvalue: ' + str(np.mean(double_q)))
 
                 # Update Eval Graph
-                self.plotter.add(np.max(double_q), np.mean(double_q), np.min(double_q), self.last_total_reward, self.e, loss, self.last_score, self.episode)
+                self.plotter.add(np.max(target_q), self.last_total_reward, self.e, loss, self.last_score, self.episode)
                 self.plotter.observe()
 
             # Update the second network wieghts
